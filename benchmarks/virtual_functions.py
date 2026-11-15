@@ -38,9 +38,16 @@ def arrhenius_yield(X, n_peaks=3, noise_sigma=0.0, peak_width=0.08, seed=42):
     Ea_values = rng_params.uniform(40, 80, n_peaks)        # activation energy (kJ/mol)
     T_opt = rng_params.uniform(400, 650, n_peaks)           # optimal temperature
     C_opt = rng_params.uniform(0.2, 0.8, n_peaks)           # optimal catalyst loading
-    # Global peak is clearly dominant; secondary peaks decay as 1/(i+1)
+    # These are nominal weights, NOT the peak values the surface reaches. The
+    # Arrhenius factor below is normalised to 1 at each peak's own optimal
+    # temperature, so it exceeds 1 on the hot side and scales the weight up.
+    # Measured for the default n_peaks=3, peak_width=0.08, seed=42: the three
+    # peaks reach 13.37, 10.19 and 8.46 in isolation, which reverses the order
+    # the weights suggest. Peaks 1 and 2 sit less than one peak width apart and
+    # merge, so the global optimum (18.3522) is their sum and peak 0 contributes
+    # one part in a million there. Peak 0 alone tops out at 13.37, below the 95%
+    # threshold of 17.43.
     heights = np.array([10.0 / (1 + 0.8 * i) for i in range(n_peaks)])
-    # peak 0 = 10.0, peak 1 = 5.56, peak 2 = 3.85, ... → 95% threshold (~9.5) only reachable at peak 0
 
     R = 8.314e-3  # gas constant kJ/(mol·K)
     sigma_T = peak_width * 400  # peak width in K units

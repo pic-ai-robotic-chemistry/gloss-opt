@@ -7,17 +7,7 @@ from gloss.surrogate.nn_models import get_nn_model_configs
 
 
 def auto_select_surrogate(X, y, cv_folds=5, scoring="neg_root_mean_squared_error"):
-    """Select the best surrogate model via cross-validation, retrain on all data.
-
-    Args:
-        X: Training features, shape (n_samples, n_features).
-        y: Training targets, shape (n_samples,).
-        cv_folds: Number of CV folds.
-        scoring: sklearn scoring metric string.
-
-    Returns:
-        Fitted model with predict(X) method.
-    """
+    """Select the best surrogate model by cross-validation."""
     n_samples = X.shape[0]
     actual_folds = min(cv_folds, n_samples)
     if actual_folds < 2:

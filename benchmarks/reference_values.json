@@ -1,0 +1,1330 @@
+{
+  "entries": {
+    "arrhenius|n_peaks=3|noise_sigma=0.0|peak_width=0.08|seed=42": {
+      "cross_check_grid_max": 18.352102781520482,
+      "cross_check_grid_res": 2000,
+      "guard_grid_max": 18.351580181167584,
+      "guard_grid_res": 500,
+      "landscape": "arrhenius",
+      "local_maxima": [
+        {
+          "n_starts": 7,
+          "x": [
+            0.44150325643885646,
+            0.44679996259396754
+          ],
+          "y": 18.352184511262436
+        },
+        {
+          "n_starts": 5,
+          "x": [
+            0.8284950481973482,
+            0.6626746735723117
+          ],
+          "y": 13.59082620005476
+        }
+      ],
+      "n_starts": 12,
+      "params": {
+        "n_peaks": 3,
+        "noise_sigma": 0.0,
+        "peak_width": 0.08,
+        "seed": 42
+      },
+      "start_min_distance": 0.16,
+      "threshold_95": 17.434575285699314,
+      "x_opt": [
+        0.44150325643885646,
+        0.44679996259396754
+      ],
+      "y_min": 0.0,
+      "y_min_basis": "strict lower bound: every term of the surface is non-negative. The minimum actually attained on the domain is about 5.3e-18.",
+      "y_opt": 18.352184511262436,
+      "y_opt_basis": "global maximum on [0,1]^2. Verified by a cross-check grid of 2000 points per axis and by L-BFGS-B refinement from starts at least 0.16 apart in x units."
+    },
+    "lennard_jones|n_peaks=3|noise_sigma=0.0|peak_width=0.03|seed=42": {
+      "cross_check_grid_max": 11.060026284921523,
+      "cross_check_grid_res": 2000,
+      "guard_grid_max": 11.059626015784652,
+      "guard_grid_res": 500,
+      "landscape": "lennard_jones",
+      "local_maxima": [
+        {
+          "n_starts": 6,
+          "x": [
+            0.19239761559936802,
+            0.7108292259909147
+          ],
+          "y": 11.06005246292987
+        },
+        {
+          "n_starts": 1,
+          "x": [
+            0.20856582078489358,
+            0.7331122279142159
+          ],
+          "y": 11.02686200169545
+        },
+        {
+          "n_starts": 3,
+          "x": [
+            0.17828408542773327,
+            0.5691753930658008
+          ],
+          "y": 8.426691507786337
+        },
+        {
+          "n_starts": 2,
+          "x": [
+            0.7986801122588479,
+            0.38878363677066335
+          ],
+          "y": 6.218956069248642
+        }
+      ],
+      "n_starts": 12,
+      "params": {
+        "n_peaks": 3,
+        "noise_sigma": 0.0,
+        "peak_width": 0.03,
+        "seed": 42
+      },
+      "second_peak": 8.426691507786337,
+      "second_peak_x": [
+        0.17828408542773327,
+        0.5691753930658008
+      ],
+      "start_min_distance": 0.06,
+      "threshold_95": 10.542049846960756,
+      "x_opt": [
+        0.19239761559936802,
+        0.7108292259909147
+      ],
+      "y_min": 0.7000001435476109,
+      "y_min_basis": "minimum measured on the 2000-point cross-check grid. No closed-form lower bound: the background keeps the attained minimum positive.",
+      "y_opt": 11.06005246292987,
+      "y_opt_basis": "global maximum on [0,1]^2. Verified by a cross-check grid of 2000 points per axis and by L-BFGS-B refinement from starts at least 0.06 apart in x units."
+    },
+    "lennard_jones|n_peaks=3|noise_sigma=0.0|peak_width=0.05|seed=42": {
+      "cross_check_grid_max": 12.182855559723114,
+      "cross_check_grid_res": 2000,
+      "guard_grid_max": 12.18291246401449,
+      "guard_grid_res": 500,
+      "landscape": "lennard_jones",
+      "local_maxima": [
+        {
+          "n_starts": 6,
+          "x": [
+            0.19237643999751658,
+            0.6975821956833309
+          ],
+          "y": 12.183017409972363
+        },
+        {
+          "n_starts": 4,
+          "x": [
+            0.18123619657205253,
+            0.5864453251521984
+          ],
+          "y": 10.01951211164074
+        },
+        {
+          "n_starts": 2,
+          "x": [
+            0.7947989091893314,
+            0.39819910495303007
+          ],
+          "y": 6.231164589035526
+        }
+      ],
+      "n_starts": 12,
+      "params": {
+        "n_peaks": 3,
+        "noise_sigma": 0.0,
+        "peak_width": 0.05,
+        "seed": 42
+      },
+      "second_peak": 10.01951211164074,
+      "second_peak_x": [
+        0.18123619657205253,
+        0.5864453251521984
+      ],
+      "start_min_distance": 0.1,
+      "threshold_95": 11.608877043480934,
+      "x_opt": [
+        0.19237643999751658,
+        0.6975821956833309
+      ],
+      "y_min": 0.7002100801437873,
+      "y_min_basis": "minimum measured on the 2000-point cross-check grid. No closed-form lower bound: the background keeps the attained minimum positive.",
+      "y_opt": 12.183017409972363,
+      "y_opt_basis": "global maximum on [0,1]^2. Verified by a cross-check grid of 2000 points per axis and by L-BFGS-B refinement from starts at least 0.1 apart in x units."
+    },
+    "lennard_jones|n_peaks=3|noise_sigma=0.0|peak_width=0.08|seed=42": {
+      "cross_check_grid_max": 15.202356429316774,
+      "cross_check_grid_res": 2000,
+      "guard_grid_max": 15.202005138665475,
+      "guard_grid_res": 500,
+      "landscape": "lennard_jones",
+      "local_maxima": [
+        {
+          "n_starts": 9,
+          "x": [
+            0.1891702674047419,
+            0.6654381053231743
+          ],
+          "y": 15.202365994634365
+        },
+        {
+          "n_starts": 3,
+          "x": [
+            0.7849297325190656,
+            0.41067978400564664
+          ],
+          "y": 6.265447154858631
+        }
+      ],
+      "n_starts": 12,
+      "params": {
+        "n_peaks": 3,
+        "noise_sigma": 0.0,
+        "peak_width": 0.08,
+        "seed": 42
+      },
+      "second_peak": 6.265447154858631,
+      "second_peak_x": [
+        0.7849297325190656,
+        0.41067978400564664
+      ],
+      "start_min_distance": 0.16,
+      "threshold_95": 14.478374054849638,
+      "x_opt": [
+        0.1891702674047419,
+        0.6654381053231743
+      ],
+      "y_min": 0.7225271989398538,
+      "y_min_basis": "minimum measured on the 2000-point cross-check grid. No closed-form lower bound: the background keeps the attained minimum positive.",
+      "y_opt": 15.202365994634365,
+      "y_opt_basis": "global maximum on [0,1]^2. Verified by a cross-check grid of 2000 points per axis and by L-BFGS-B refinement from starts at least 0.16 apart in x units."
+    },
+    "lennard_jones|n_peaks=5|noise_sigma=0.0|peak_width=0.03|seed=42": {
+      "cross_check_grid_max": 11.081493447604085,
+      "cross_check_grid_res": 2000,
+      "guard_grid_max": 11.080789022986693,
+      "guard_grid_res": 500,
+      "landscape": "lennard_jones",
+      "local_maxima": [
+        {
+          "n_starts": 4,
+          "x": [
+            0.19273713510622495,
+            0.7107281359880092
+          ],
+          "y": 11.081546737038199
+        },
+        {
+          "n_starts": 3,
+          "x": [
+            0.17831802759049745,
+            0.5691178291799072
+          ],
+          "y": 9.677077044844957
+        },
+        {
+          "n_starts": 1,
+          "x": [
+            0.17835518360583175,
+            0.569118394312319
+          ],
+          "y": 9.677076741203365
+        },
+        {
+          "n_starts": 2,
+          "x": [
+            0.7958422936309401,
+            0.3873312203228263
+          ],
+          "y": 8.729686395474872
+        },
+        {
+          "n_starts": 1,
+          "x": [
+            0.4689530679593554,
+            0.41270663853120243
+          ],
+          "y": 7.6221495739456895
+        },
+        {
+          "n_starts": 1,
+          "x": [
+            0.561072310646861,
+            0.41018589193404303
+          ],
+          "y": 6.63328215191614
+        }
+      ],
+      "n_starts": 12,
+      "params": {
+        "n_peaks": 5,
+        "noise_sigma": 0.0,
+        "peak_width": 0.03,
+        "seed": 42
+      },
+      "second_peak": 9.677077044844957,
+      "second_peak_x": [
+        0.17831802759049745,
+        0.5691178291799072
+      ],
+      "start_min_distance": 0.06,
+      "threshold_95": 10.562469409039155,
+      "x_opt": [
+        0.19273713510622495,
+        0.7107281359880092
+      ],
+      "y_min": 0.700000177057317,
+      "y_min_basis": "minimum measured on the 2000-point cross-check grid. No closed-form lower bound: the background keeps the attained minimum positive.",
+      "y_opt": 11.081546737038199,
+      "y_opt_basis": "global maximum on [0,1]^2. Verified by a cross-check grid of 2000 points per axis and by L-BFGS-B refinement from starts at least 0.06 apart in x units."
+    },
+    "lennard_jones|n_peaks=5|noise_sigma=0.0|peak_width=0.05|seed=42": {
+      "cross_check_grid_max": 12.413676246263803,
+      "cross_check_grid_res": 2000,
+      "guard_grid_max": 12.412805213291469,
+      "guard_grid_res": 500,
+      "landscape": "lennard_jones",
+      "local_maxima": [
+        {
+          "n_starts": 5,
+          "x": [
+            0.19249250613155508,
+            0.6968348867660494
+          ],
+          "y": 12.413683990028982
+        },
+        {
+          "n_starts": 3,
+          "x": [
+            0.18154256602368146,
+            0.5847386645437929
+          ],
+          "y": 11.284964341815746
+        },
+        {
+          "n_starts": 3,
+          "x": [
+            0.4900803306095131,
+            0.41228619027489466
+          ],
+          "y": 9.468412870890244
+        },
+        {
+          "n_starts": 1,
+          "x": [
+            0.7791125592695375,
+            0.3826413485707356
+          ],
+          "y": 9.022901864736225
+        }
+      ],
+      "n_starts": 12,
+      "params": {
+        "n_peaks": 5,
+        "noise_sigma": 0.0,
+        "peak_width": 0.05,
+        "seed": 42
+      },
+      "second_peak": 11.284964341815746,
+      "second_peak_x": [
+        0.18154256602368146,
+        0.5847386645437929
+      ],
+      "start_min_distance": 0.1,
+      "threshold_95": 11.828017565040158,
+      "x_opt": [
+        0.19249250613155508,
+        0.6968348867660494
+      ],
+      "y_min": 0.700355490252511,
+      "y_min_basis": "minimum measured on the 2000-point cross-check grid. No closed-form lower bound: the background keeps the attained minimum positive.",
+      "y_opt": 12.413683990028982,
+      "y_opt_basis": "global maximum on [0,1]^2. Verified by a cross-check grid of 2000 points per axis and by L-BFGS-B refinement from starts at least 0.1 apart in x units."
+    },
+    "lennard_jones|n_peaks=5|noise_sigma=0.0|peak_width=0.08|seed=42": {
+      "cross_check_grid_max": 16.327247480740013,
+      "cross_check_grid_res": 2000,
+      "guard_grid_max": 16.327165810363585,
+      "guard_grid_res": 500,
+      "landscape": "lennard_jones",
+      "local_maxima": [
+        {
+          "n_starts": 6,
+          "x": [
+            0.1903613765767759,
+            0.6539296931984774
+          ],
+          "y": 16.327286807401265
+        },
+        {
+          "n_starts": 5,
+          "x": [
+            0.5143872361394864,
+            0.413452264404531
+          ],
+          "y": 12.65639487565844
+        },
+        {
+          "n_starts": 1,
+          "x": [
+            0.7509616167165397,
+            0.3844921373226292
+          ],
+          "y": 10.71288527859809
+        }
+      ],
+      "n_starts": 12,
+      "params": {
+        "n_peaks": 5,
+        "noise_sigma": 0.0,
+        "peak_width": 0.08,
+        "seed": 42
+      },
+      "second_peak": 12.65639487565844,
+      "second_peak_x": [
+        0.5143872361394864,
+        0.413452264404531
+      ],
+      "start_min_distance": 0.16,
+      "threshold_95": 15.547841489393328,
+      "x_opt": [
+        0.1903613765767759,
+        0.6539296931984774
+      ],
+      "y_min": 0.7383804472425294,
+      "y_min_basis": "minimum measured on the 2000-point cross-check grid. No closed-form lower bound: the background keeps the attained minimum positive.",
+      "y_opt": 16.327286807401265,
+      "y_opt_basis": "global maximum on [0,1]^2. Verified by a cross-check grid of 2000 points per axis and by L-BFGS-B refinement from starts at least 0.16 apart in x units."
+    },
+    "muller_brown|n_peaks=3|noise_sigma=0.0|peak_width=0.03|seed=42": {
+      "cross_check_grid_max": 10.859322586540792,
+      "cross_check_grid_res": 2000,
+      "guard_grid_max": 10.845747649115127,
+      "guard_grid_res": 500,
+      "landscape": "muller_brown",
+      "local_maxima": [
+        {
+          "n_starts": 3,
+          "x": [
+            0.6404641040340122,
+            0.1619076694497683
+          ],
+          "y": 10.859594452704007
+        },
+        {
+          "n_starts": 7,
+          "x": [
+            0.6119669406654993,
+            0.5605134916604787
+          ],
+          "y": 8.616152087563437
+        },
+        {
+          "n_starts": 1,
+          "x": [
+            0.37571173003788283,
+            0.2017383337295134
+          ],
+          "y": 5.837127574971225
+        },
+        {
+          "n_starts": 1,
+          "x": [
+            0.5002696275986369,
+            0.5001235914986358
+          ],
+          "y": 1.3000419098851983
+        }
+      ],
+      "n_starts": 12,
+      "params": {
+        "n_peaks": 3,
+        "noise_sigma": 0.0,
+        "peak_width": 0.03,
+        "seed": 42
+      },
+      "second_peak": 8.616152087563437,
+      "second_peak_x": [
+        0.6119669406654993,
+        0.5605134916604787
+      ],
+      "start_min_distance": 0.06,
+      "threshold_95": 10.348728548811877,
+      "x_opt": [
+        0.6404641040340122,
+        0.1619076694497683
+      ],
+      "y_min": 0.6422763748614004,
+      "y_min_basis": "minimum measured on the 2000-point cross-check grid. No closed-form lower bound: the background keeps the attained minimum positive.",
+      "y_opt": 10.859594452704007,
+      "y_opt_basis": "global maximum on [0,1]^2. Verified by a cross-check grid of 2000 points per axis and by L-BFGS-B refinement from starts at least 0.06 apart in x units."
+    },
+    "muller_brown|n_peaks=3|noise_sigma=0.0|peak_width=0.05|seed=42": {
+      "cross_check_grid_max": 10.85966032133393,
+      "cross_check_grid_res": 2000,
+      "guard_grid_max": 10.856131813566043,
+      "guard_grid_res": 500,
+      "landscape": "muller_brown",
+      "local_maxima": [
+        {
+          "n_starts": 3,
+          "x": [
+            0.6406462905393115,
+            0.16182316430511282
+          ],
+          "y": 10.859818116402353
+        },
+        {
+          "n_starts": 7,
+          "x": [
+            0.6116309368859919,
+            0.5603692649559204
+          ],
+          "y": 8.616577480943327
+        },
+        {
+          "n_starts": 2,
+          "x": [
+            0.3752446278282824,
+            0.2018229417915882
+          ],
+          "y": 5.837701261293839
+        }
+      ],
+      "n_starts": 12,
+      "params": {
+        "n_peaks": 3,
+        "noise_sigma": 0.0,
+        "peak_width": 0.05,
+        "seed": 42
+      },
+      "second_peak": 8.616577480943327,
+      "second_peak_x": [
+        0.6116309368859919,
+        0.5603692649559204
+      ],
+      "start_min_distance": 0.1,
+      "threshold_95": 10.348941029325303,
+      "x_opt": [
+        0.6406462905393115,
+        0.16182316430511282
+      ],
+      "y_min": 0.6422763748614004,
+      "y_min_basis": "minimum measured on the 2000-point cross-check grid. No closed-form lower bound: the background keeps the attained minimum positive.",
+      "y_opt": 10.859818116402353,
+      "y_opt_basis": "global maximum on [0,1]^2. Verified by a cross-check grid of 2000 points per axis and by L-BFGS-B refinement from starts at least 0.1 apart in x units."
+    },
+    "muller_brown|n_peaks=3|noise_sigma=0.0|peak_width=0.08|seed=42": {
+      "cross_check_grid_max": 10.860812052452467,
+      "cross_check_grid_res": 2000,
+      "guard_grid_max": 10.860250221886812,
+      "guard_grid_res": 500,
+      "landscape": "muller_brown",
+      "local_maxima": [
+        {
+          "n_starts": 4,
+          "x": [
+            0.6410778454741018,
+            0.16163154743121355
+          ],
+          "y": 10.860920825058589
+        },
+        {
+          "n_starts": 6,
+          "x": [
+            0.6108140852284951,
+            0.5600113775084282
+          ],
+          "y": 8.617655407055762
+        },
+        {
+          "n_starts": 2,
+          "x": [
+            0.37410046501641697,
+            0.20202346578652414
+          ],
+          "y": 5.839119497916052
+        }
+      ],
+      "n_starts": 12,
+      "params": {
+        "n_peaks": 3,
+        "noise_sigma": 0.0,
+        "peak_width": 0.08,
+        "seed": 42
+      },
+      "second_peak": 8.617655407055762,
+      "second_peak_x": [
+        0.6108140852284951,
+        0.5600113775084282
+      ],
+      "start_min_distance": 0.16,
+      "threshold_95": 10.349988605275556,
+      "x_opt": [
+        0.6410778454741018,
+        0.16163154743121355
+      ],
+      "y_min": 0.6422764293979417,
+      "y_min_basis": "minimum measured on the 2000-point cross-check grid. No closed-form lower bound: the background keeps the attained minimum positive.",
+      "y_opt": 10.860920825058589,
+      "y_opt_basis": "global maximum on [0,1]^2. Verified by a cross-check grid of 2000 points per axis and by L-BFGS-B refinement from starts at least 0.16 apart in x units."
+    },
+    "muller_brown|n_peaks=5|noise_sigma=0.0|peak_width=0.03|seed=42": {
+      "cross_check_grid_max": 10.859741121815027,
+      "cross_check_grid_res": 2000,
+      "guard_grid_max": 10.858023237249949,
+      "guard_grid_res": 500,
+      "landscape": "muller_brown",
+      "local_maxima": [
+        {
+          "n_starts": 3,
+          "x": [
+            0.6406577906306481,
+            0.16205753404441686
+          ],
+          "y": 10.859869059842465
+        },
+        {
+          "n_starts": 3,
+          "x": [
+            0.6119339488584078,
+            0.5604941339639454
+          ],
+          "y": 9.86619595087364
+        },
+        {
+          "n_starts": 2,
+          "x": [
+            0.3758781782167355,
+            0.20180118997312763
+          ],
+          "y": 8.33833493775223
+        },
+        {
+          "n_starts": 1,
+          "x": [
+            0.5957030050600776,
+            0.7581123187651477
+          ],
+          "y": 7.070680884542874
+        },
+        {
+          "n_starts": 3,
+          "x": [
+            0.2416208327497181,
+            0.16788034573547173
+          ],
+          "y": 6.139378596781331
+        }
+      ],
+      "n_starts": 12,
+      "params": {
+        "n_peaks": 5,
+        "noise_sigma": 0.0,
+        "peak_width": 0.03,
+        "seed": 42
+      },
+      "second_peak": 9.86619595087364,
+      "second_peak_x": [
+        0.6119339488584078,
+        0.5604941339639454
+      ],
+      "start_min_distance": 0.06,
+      "threshold_95": 10.348989425593409,
+      "x_opt": [
+        0.6406577906306481,
+        0.16205753404441686
+      ],
+      "y_min": 0.6422763748614004,
+      "y_min_basis": "minimum measured on the 2000-point cross-check grid. No closed-form lower bound: the background keeps the attained minimum positive.",
+      "y_opt": 10.859869059842465,
+      "y_opt_basis": "global maximum on [0,1]^2. Verified by a cross-check grid of 2000 points per axis and by L-BFGS-B refinement from starts at least 0.06 apart in x units."
+    },
+    "muller_brown|n_peaks=5|noise_sigma=0.0|peak_width=0.05|seed=42": {
+      "cross_check_grid_max": 10.860381588656256,
+      "cross_check_grid_res": 2000,
+      "guard_grid_max": 10.860553882008158,
+      "guard_grid_res": 500,
+      "landscape": "muller_brown",
+      "local_maxima": [
+        {
+          "n_starts": 3,
+          "x": [
+            0.6411852984395683,
+            0.16224012947685276
+          ],
+          "y": 10.860582292574268
+        },
+        {
+          "n_starts": 3,
+          "x": [
+            0.6115416987977431,
+            0.5603222641972713
+          ],
+          "y": 9.867308262704983
+        },
+        {
+          "n_starts": 3,
+          "x": [
+            0.3748413731232713,
+            0.2011212480750723
+          ],
+          "y": 8.606459413410116
+        },
+        {
+          "n_starts": 1,
+          "x": [
+            0.5959589402742751,
+            0.7578141500027652
+          ],
+          "y": 7.0710928082539
+        },
+        {
+          "n_starts": 2,
+          "x": [
+            0.24099450591654017,
+            0.16787001090914666
+          ],
+          "y": 6.139876978482579
+        }
+      ],
+      "n_starts": 12,
+      "params": {
+        "n_peaks": 5,
+        "noise_sigma": 0.0,
+        "peak_width": 0.05,
+        "seed": 42
+      },
+      "second_peak": 9.867308262704983,
+      "second_peak_x": [
+        0.6115416987977431,
+        0.5603222641972713
+      ],
+      "start_min_distance": 0.1,
+      "threshold_95": 10.349666996688626,
+      "x_opt": [
+        0.6411852984395683,
+        0.16224012947685276
+      ],
+      "y_min": 0.6422763748614004,
+      "y_min_basis": "minimum measured on the 2000-point cross-check grid. No closed-form lower bound: the background keeps the attained minimum positive.",
+      "y_opt": 10.860582292574268,
+      "y_opt_basis": "global maximum on [0,1]^2. Verified by a cross-check grid of 2000 points per axis and by L-BFGS-B refinement from starts at least 0.1 apart in x units."
+    },
+    "muller_brown|n_peaks=5|noise_sigma=0.0|peak_width=0.08|seed=42": {
+      "cross_check_grid_max": 10.862522397922218,
+      "cross_check_grid_res": 2000,
+      "guard_grid_max": 10.861647103762557,
+      "guard_grid_res": 500,
+      "landscape": "muller_brown",
+      "local_maxima": [
+        {
+          "n_starts": 4,
+          "x": [
+            0.6424692105546042,
+            0.16268643306750477
+          ],
+          "y": 10.86254239299712
+        },
+        {
+          "n_starts": 3,
+          "x": [
+            0.6113271919196673,
+            0.5616446333087889
+          ],
+          "y": 10.040546195739468
+        },
+        {
+          "n_starts": 2,
+          "x": [
+            0.3697806057132241,
+            0.19757558587701443
+          ],
+          "y": 10.026961675822376
+        },
+        {
+          "n_starts": 2,
+          "x": [
+            0.5965913839979332,
+            0.7570435272924764
+          ],
+          "y": 7.072610572717134
+        },
+        {
+          "n_starts": 1,
+          "x": [
+            0.24347567882828686,
+            0.16856708953007887
+          ],
+          "y": 6.167034201010684
+        }
+      ],
+      "n_starts": 12,
+      "params": {
+        "n_peaks": 5,
+        "noise_sigma": 0.0,
+        "peak_width": 0.08,
+        "seed": 42
+      },
+      "second_peak": 10.040546195739468,
+      "second_peak_x": [
+        0.6113271919196673,
+        0.5616446333087889
+      ],
+      "start_min_distance": 0.16,
+      "threshold_95": 10.35152912108712,
+      "x_opt": [
+        0.6424692105546042,
+        0.16268643306750477
+      ],
+      "y_min": 0.6422769547971205,
+      "y_min_basis": "minimum measured on the 2000-point cross-check grid. No closed-form lower bound: the background keeps the attained minimum positive.",
+      "y_opt": 10.86254239299712,
+      "y_opt_basis": "global maximum on [0,1]^2. Verified by a cross-check grid of 2000 points per axis and by L-BFGS-B refinement from starts at least 0.16 apart in x units."
+    },
+    "nd_clusters|n_peaks=3|ndim=2|noise_sigma=0.0|peak_width=0.1|seed=42": {
+      "centres": [
+        [
+          0.5252781676390921,
+          0.3418753346804587
+        ],
+        [
+          0.17872446672172781,
+          0.2006497301825141
+        ],
+        [
+          0.6352480542606129,
+          0.7007387430502129
+        ]
+      ],
+      "key_dims": [
+        1,
+        0
+      ],
+      "landscape": "nd_clusters",
+      "params": {
+        "n_peaks": 3,
+        "ndim": 2,
+        "noise_sigma": 0.0,
+        "peak_width": 0.1,
+        "seed": 42
+      },
+      "threshold_95": 10.0,
+      "x_opt": [
+        0.5252781676390921,
+        0.3418753346804587
+      ],
+      "y_min": 0.5,
+      "y_min_basis": "approached, not attained: every peak term is positive",
+      "y_opt": 10.5,
+      "y_opt_basis": "exact: the clusters combine by running maximum so the peak value is 10.0, the flat background adds 0.5, and a cluster centre lies inside the search box. Attained on a whole subspace, because the distance uses only the key axes."
+    },
+    "nd_clusters|n_peaks=5|ndim=4|noise_sigma=0.0|peak_width=0.08|seed=42": {
+      "centres": [
+        [
+          0.5252781676390921,
+          0.3418753346804587,
+          0.17872446672172781,
+          0.2006497301825141
+        ],
+        [
+          0.6352480542606129,
+          0.7007387430502129,
+          0.3770643758905531,
+          0.6345599703778346
+        ],
+        [
+          0.8120734464902704,
+          0.7019183908929288,
+          0.4285174226171391,
+          0.19813385562617056
+        ],
+        [
+          0.4265786519787812,
+          0.7488225141254129,
+          0.16216395591182708,
+          0.6438648239071879
+        ],
+        [
+          0.45251425416167934,
+          0.2934993423810702,
+          0.29810258513257537,
+          0.16963599434159743
+        ]
+      ],
+      "key_dims": [
+        2,
+        3
+      ],
+      "landscape": "nd_clusters",
+      "params": {
+        "n_peaks": 5,
+        "ndim": 4,
+        "noise_sigma": 0.0,
+        "peak_width": 0.08,
+        "seed": 42
+      },
+      "threshold_95": 10.0,
+      "x_opt": [
+        0.5252781676390921,
+        0.3418753346804587,
+        0.17872446672172781,
+        0.2006497301825141
+      ],
+      "y_min": 0.5,
+      "y_min_basis": "approached, not attained: every peak term is positive",
+      "y_opt": 10.5,
+      "y_opt_basis": "exact: the clusters combine by running maximum so the peak value is 10.0, the flat background adds 0.5, and a cluster centre lies inside the search box. Attained on a whole subspace, because the distance uses only the key axes."
+    },
+    "nd_clusters|n_peaks=5|ndim=6|noise_sigma=0.0|peak_width=0.15|seed=42": {
+      "centres": [
+        [
+          0.5252781676390921,
+          0.3418753346804587,
+          0.17872446672172781,
+          0.2006497301825141,
+          0.6352480542606129,
+          0.7007387430502129
+        ],
+        [
+          0.3770643758905531,
+          0.6345599703778346,
+          0.8120734464902704,
+          0.7019183908929288,
+          0.4285174226171391,
+          0.19813385562617056
+        ],
+        [
+          0.4265786519787812,
+          0.7488225141254129,
+          0.16216395591182708,
+          0.6438648239071879,
+          0.45251425416167934,
+          0.2934993423810702
+        ],
+        [
+          0.29810258513257537,
+          0.16963599434159743,
+          0.21219938971414962,
+          0.6751430844098889,
+          0.5396949678072813,
+          0.4376826986735196
+        ],
+        [
+          0.31188057986673334,
+          0.559747353258971,
+          0.24127053487514133,
+          0.1838164790351328,
+          0.32418749725621454,
+          0.8364663366466927
+        ]
+      ],
+      "key_dims": [
+        2,
+        5,
+        4
+      ],
+      "landscape": "nd_clusters",
+      "params": {
+        "n_peaks": 5,
+        "ndim": 6,
+        "noise_sigma": 0.0,
+        "peak_width": 0.15,
+        "seed": 42
+      },
+      "threshold_95": 10.0,
+      "x_opt": [
+        0.5252781676390921,
+        0.3418753346804587,
+        0.17872446672172781,
+        0.2006497301825141,
+        0.6352480542606129,
+        0.7007387430502129
+      ],
+      "y_min": 0.5,
+      "y_min_basis": "approached, not attained: every peak term is positive",
+      "y_opt": 10.5,
+      "y_opt_basis": "exact: the clusters combine by running maximum so the peak value is 10.0, the flat background adds 0.5, and a cluster centre lies inside the search box. Attained on a whole subspace, because the distance uses only the key axes."
+    },
+    "nd_clusters|n_peaks=5|ndim=6|noise_sigma=0.0|peak_width=0.1|seed=42": {
+      "centres": [
+        [
+          0.5252781676390921,
+          0.3418753346804587,
+          0.17872446672172781,
+          0.2006497301825141,
+          0.6352480542606129,
+          0.7007387430502129
+        ],
+        [
+          0.3770643758905531,
+          0.6345599703778346,
+          0.8120734464902704,
+          0.7019183908929288,
+          0.4285174226171391,
+          0.19813385562617056
+        ],
+        [
+          0.4265786519787812,
+          0.7488225141254129,
+          0.16216395591182708,
+          0.6438648239071879,
+          0.45251425416167934,
+          0.2934993423810702
+        ],
+        [
+          0.29810258513257537,
+          0.16963599434159743,
+          0.21219938971414962,
+          0.6751430844098889,
+          0.5396949678072813,
+          0.4376826986735196
+        ],
+        [
+          0.31188057986673334,
+          0.559747353258971,
+          0.24127053487514133,
+          0.1838164790351328,
+          0.32418749725621454,
+          0.8364663366466927
+        ]
+      ],
+      "key_dims": [
+        2,
+        5,
+        4
+      ],
+      "landscape": "nd_clusters",
+      "params": {
+        "n_peaks": 5,
+        "ndim": 6,
+        "noise_sigma": 0.0,
+        "peak_width": 0.1,
+        "seed": 42
+      },
+      "threshold_95": 10.0,
+      "x_opt": [
+        0.5252781676390921,
+        0.3418753346804587,
+        0.17872446672172781,
+        0.2006497301825141,
+        0.6352480542606129,
+        0.7007387430502129
+      ],
+      "y_min": 0.5,
+      "y_min_basis": "approached, not attained: every peak term is positive",
+      "y_opt": 10.5,
+      "y_opt_basis": "exact: the clusters combine by running maximum so the peak value is 10.0, the flat background adds 0.5, and a cluster centre lies inside the search box. Attained on a whole subspace, because the distance uses only the key axes."
+    },
+    "nd_clusters|n_peaks=5|ndim=6|noise_sigma=0.0|peak_width=0.2|seed=42": {
+      "centres": [
+        [
+          0.5252781676390921,
+          0.3418753346804587,
+          0.17872446672172781,
+          0.2006497301825141,
+          0.6352480542606129,
+          0.7007387430502129
+        ],
+        [
+          0.3770643758905531,
+          0.6345599703778346,
+          0.8120734464902704,
+          0.7019183908929288,
+          0.4285174226171391,
+          0.19813385562617056
+        ],
+        [
+          0.4265786519787812,
+          0.7488225141254129,
+          0.16216395591182708,
+          0.6438648239071879,
+          0.45251425416167934,
+          0.2934993423810702
+        ],
+        [
+          0.29810258513257537,
+          0.16963599434159743,
+          0.21219938971414962,
+          0.6751430844098889,
+          0.5396949678072813,
+          0.4376826986735196
+        ],
+        [
+          0.31188057986673334,
+          0.559747353258971,
+          0.24127053487514133,
+          0.1838164790351328,
+          0.32418749725621454,
+          0.8364663366466927
+        ]
+      ],
+      "key_dims": [
+        2,
+        5,
+        4
+      ],
+      "landscape": "nd_clusters",
+      "params": {
+        "n_peaks": 5,
+        "ndim": 6,
+        "noise_sigma": 0.0,
+        "peak_width": 0.2,
+        "seed": 42
+      },
+      "threshold_95": 10.0,
+      "x_opt": [
+        0.5252781676390921,
+        0.3418753346804587,
+        0.17872446672172781,
+        0.2006497301825141,
+        0.6352480542606129,
+        0.7007387430502129
+      ],
+      "y_min": 0.5,
+      "y_min_basis": "approached, not attained: every peak term is positive",
+      "y_opt": 10.5,
+      "y_opt_basis": "exact: the clusters combine by running maximum so the peak value is 10.0, the flat background adds 0.5, and a cluster centre lies inside the search box. Attained on a whole subspace, because the distance uses only the key axes."
+    },
+    "nd_clusters|n_peaks=7|ndim=10|noise_sigma=0.0|peak_width=0.2|seed=42": {
+      "centres": [
+        [
+          0.5252781676390921,
+          0.3418753346804587,
+          0.17872446672172781,
+          0.2006497301825141,
+          0.6352480542606129,
+          0.7007387430502129,
+          0.3770643758905531,
+          0.6345599703778346,
+          0.8120734464902704,
+          0.7019183908929288
+        ],
+        [
+          0.4285174226171391,
+          0.19813385562617056,
+          0.4265786519787812,
+          0.7488225141254129,
+          0.16216395591182708,
+          0.6438648239071879,
+          0.45251425416167934,
+          0.2934993423810702,
+          0.29810258513257537,
+          0.16963599434159743
+        ],
+        [
+          0.21219938971414962,
+          0.6751430844098889,
+          0.5396949678072813,
+          0.4376826986735196,
+          0.31188057986673334,
+          0.559747353258971,
+          0.24127053487514133,
+          0.1838164790351328,
+          0.32418749725621454,
+          0.8364663366466927
+        ],
+        [
+          0.38830482008541345,
+          0.6360494175360132,
+          0.44461146668553186,
+          0.845899064064443,
+          0.7200989373183625,
+          0.25940730138756257,
+          0.7406137757935032,
+          0.6410394192361533,
+          0.711605070329875,
+          0.45997499232116046
+        ],
+        [
+          0.8409586047226721,
+          0.8253794782973413,
+          0.5750486369194003,
+          0.6795065094063149,
+          0.8422106666165418,
+          0.5979854743740891,
+          0.3370839498248623,
+          0.8461351988344454,
+          0.7498050584283541,
+          0.6232232911003408
+        ],
+        [
+          0.389336785545467,
+          0.6848883034844436,
+          0.5082928504143336,
+          0.33444586117168973,
+          0.7729177419369518,
+          0.4166241983739649,
+          0.6457649788440151,
+          0.5996955546102348,
+          0.7171691911935303,
+          0.5899534834465918
+        ],
+        [
+          0.6625965291605187,
+          0.8178206187925158,
+          0.21627310773861552,
+          0.3568015232406585,
+          0.8059635839484884,
+          0.23685684410368918,
+          0.4503912501597821,
+          0.7160101534934195,
+          0.8154641738705838,
+          0.41072713049362164
+        ]
+      ],
+      "key_dims": [
+        1,
+        6,
+        3,
+        2,
+        8
+      ],
+      "landscape": "nd_clusters",
+      "params": {
+        "n_peaks": 7,
+        "ndim": 10,
+        "noise_sigma": 0.0,
+        "peak_width": 0.2,
+        "seed": 42
+      },
+      "threshold_95": 10.0,
+      "x_opt": [
+        0.5252781676390921,
+        0.3418753346804587,
+        0.17872446672172781,
+        0.2006497301825141,
+        0.6352480542606129,
+        0.7007387430502129,
+        0.3770643758905531,
+        0.6345599703778346,
+        0.8120734464902704,
+        0.7019183908929288
+      ],
+      "y_min": 0.5,
+      "y_min_basis": "approached, not attained: every peak term is positive",
+      "y_opt": 10.5,
+      "y_opt_basis": "exact: the clusters combine by running maximum so the peak value is 10.0, the flat background adds 0.5, and a cluster centre lies inside the search box. Attained on a whole subspace, because the distance uses only the key axes."
+    },
+    "nd_clusters|n_peaks=7|ndim=8|noise_sigma=0.0|peak_width=0.14|seed=42": {
+      "centres": [
+        [
+          0.5252781676390921,
+          0.3418753346804587,
+          0.17872446672172781,
+          0.2006497301825141,
+          0.6352480542606129,
+          0.7007387430502129,
+          0.3770643758905531,
+          0.6345599703778346
+        ],
+        [
+          0.8120734464902704,
+          0.7019183908929288,
+          0.4285174226171391,
+          0.19813385562617056,
+          0.4265786519787812,
+          0.7488225141254129,
+          0.16216395591182708,
+          0.6438648239071879
+        ],
+        [
+          0.45251425416167934,
+          0.2934993423810702,
+          0.29810258513257537,
+          0.16963599434159743,
+          0.21219938971414962,
+          0.6751430844098889,
+          0.5396949678072813,
+          0.4376826986735196
+        ],
+        [
+          0.31188057986673334,
+          0.559747353258971,
+          0.24127053487514133,
+          0.1838164790351328,
+          0.32418749725621454,
+          0.8364663366466927,
+          0.38830482008541345,
+          0.6360494175360132
+        ],
+        [
+          0.44461146668553186,
+          0.845899064064443,
+          0.7200989373183625,
+          0.25940730138756257,
+          0.7406137757935032,
+          0.6410394192361533,
+          0.711605070329875,
+          0.45997499232116046
+        ],
+        [
+          0.8409586047226721,
+          0.8253794782973413,
+          0.5750486369194003,
+          0.6795065094063149,
+          0.8422106666165418,
+          0.5979854743740891,
+          0.3370839498248623,
+          0.8461351988344454
+        ],
+        [
+          0.7498050584283541,
+          0.6232232911003408,
+          0.389336785545467,
+          0.6848883034844436,
+          0.5082928504143336,
+          0.33444586117168973,
+          0.7729177419369518,
+          0.4166241983739649
+        ]
+      ],
+      "key_dims": [
+        3,
+        0,
+        1,
+        4
+      ],
+      "landscape": "nd_clusters",
+      "params": {
+        "n_peaks": 7,
+        "ndim": 8,
+        "noise_sigma": 0.0,
+        "peak_width": 0.14,
+        "seed": 42
+      },
+      "threshold_95": 10.0,
+      "x_opt": [
+        0.5252781676390921,
+        0.3418753346804587,
+        0.17872446672172781,
+        0.2006497301825141,
+        0.6352480542606129,
+        0.7007387430502129,
+        0.3770643758905531,
+        0.6345599703778346
+      ],
+      "y_min": 0.5,
+      "y_min_basis": "approached, not attained: every peak term is positive",
+      "y_opt": 10.5,
+      "y_opt_basis": "exact: the clusters combine by running maximum so the peak value is 10.0, the flat background adds 0.5, and a cluster centre lies inside the search box. Attained on a whole subspace, because the distance uses only the key axes."
+    }
+  },
+  "environment": {
+    "numpy": "1.26.4",
+    "python": "3.9.6",
+    "scipy": "1.13.1"
+  },
+  "generated": "2026-10-25",
+  "generator": "revision1/continuous/calibrate_reference_values.py",
+  "note": "Only the continuous benchmark path reads this file. The discrete path keeps taking both ends from its candidate pool, and arrhenius_optimum() is unchanged.",
+  "pct_opt_rtol": 1e-06
+}

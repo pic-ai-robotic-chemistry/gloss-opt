@@ -29,10 +29,7 @@ class _RBFRegressorWrapper(BaseEstimator, RegressorMixin):
 
 
 def get_ml_model_configs():
-    """Return list of ML model configs for auto-selection.
-
-    Each config is a dict with: name, estimator, param_grid.
-    """
+    """Return the ML model configs for auto-selection."""
     return [
         {
             "name": "GaussianProcess",

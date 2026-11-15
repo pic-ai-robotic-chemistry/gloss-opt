@@ -2,7 +2,7 @@ import warnings
 import numpy as np
 from scipy.optimize import minimize
 from sklearn.neighbors import BallTree
-from gloss.utils import is_duplicate
+from gloss.utils import is_batch_rejected, is_rejected
 
 
 def _make_tree(data, metric="euclidean"):
@@ -14,15 +14,9 @@ def _make_tree(data, metric="euclidean"):
 
 def find_local_best(surrogate, space, n_points, excluded, direction,
                     tolerance=0.0, window_radius=None, n_random_samples=10000,
-                    distance_metric="euclidean", top_k=None):
-    """Find locally optimal points — better than all neighbors within a window.
-
-    top_k controls the O(K) truncation in discrete mode:
-      - None (default): use max(500, n_points * 50) — production default
-      - int >= 1: scan exactly top-k candidates by predicted mean
-      - 0: scan all candidates (O(n) — no truncation; for ablation)
-    Has no effect in continuous mode.
-    """
+                    distance_metric="euclidean", top_k=None,
+                    n_measured=None, batch_tolerance=None):
+    """Select local optima within a neighbor window."""
     sign = 1.0 if direction == "maximize" else -1.0
 
     if window_radius is None:
@@ -31,17 +25,19 @@ def find_local_best(surrogate, space, n_points, excluded, direction,
     if space.mode == "discrete":
         return _discrete_local_best(
             surrogate, space, n_points, excluded, sign, tolerance, window_radius,
-            distance_metric, top_k
+            distance_metric, top_k, n_measured, batch_tolerance
         )
     else:
         return _continuous_local_best(
             surrogate, space, n_points, excluded, sign, tolerance,
-            window_radius, n_random_samples, distance_metric
+            window_radius, n_random_samples, distance_metric,
+            n_measured, batch_tolerance
         )
 
 
 def _discrete_local_best(surrogate, space, n_points, excluded, sign, tolerance,
-                         window_radius, distance_metric="euclidean", top_k=None):
+                         window_radius, distance_metric="euclidean", top_k=None,
+                         n_measured=None, batch_tolerance=None):
     candidates = space.get_candidates_excluding(excluded, tolerance)
     if len(candidates) == 0:
         warnings.warn("local_best: no candidates available after exclusion.")
@@ -50,17 +46,15 @@ def _discrete_local_best(surrogate, space, n_points, excluded, sign, tolerance,
     preds = surrogate.predict(candidates)
     tree = _make_tree(candidates, distance_metric)
 
-    # O(K) truncation: scan only top-k candidates by predicted mean.
-    # A local optimum must have a high prediction, so checking only the
-    # top candidates is sufficient and avoids O(n) iteration on large pools.
+    # Scan only the top-k candidates by predicted mean.
     if top_k is None:
-        # production default: same as historical hardcoded behavior
+        # default
         max_check = min(len(candidates), max(500, n_points * 50))
     elif top_k <= 0:
-        # ablation: full O(n) scan
+        # full scan
         max_check = len(candidates)
     else:
-        # explicit override (for ablation studies)
+        # explicit override
         max_check = min(len(candidates), int(top_k))
     top_indices = np.argsort(sign * preds)[::-1][:max_check]
 
@@ -81,15 +75,23 @@ def _discrete_local_best(surrogate, space, n_points, excluded, sign, tolerance,
 
     local_optima.sort(key=lambda x: sign * x[1], reverse=True)
 
+    # Points already chosen in this batch.
+    n_meas = excluded.shape[0] if n_measured is None else n_measured
+    batch_points = [row for row in excluded[n_meas:]]
+
     results = []
     for idx, pred_val in local_optima:
         if len(results) >= n_points:
             break
+        point = candidates[idx]
+        if is_batch_rejected(point, batch_points, tolerance, batch_tolerance):
+            continue
         results.append({
-            "point": candidates[idx].tolist(),
+            "point": point.tolist(),
             "strategy": "local_best",
             "predicted_value": float(pred_val),
         })
+        batch_points.append(point)
 
     if len(results) < n_points:
         warnings.warn(f"local_best: only found {len(results)}/{n_points} local optima.")
@@ -97,7 +99,8 @@ def _discrete_local_best(surrogate, space, n_points, excluded, sign, tolerance,
 
 
 def _continuous_local_best(surrogate, space, n_points, excluded, sign, tolerance,
-                           window_radius, n_random_samples, distance_metric="euclidean"):
+                           window_radius, n_random_samples, distance_metric="euclidean",
+                           n_measured=None, batch_tolerance=None):
     samples = space.sample(n_random_samples)
     if len(samples) == 0:
         warnings.warn("local_best: no feasible samples generated.")
@@ -120,8 +123,7 @@ def _continuous_local_best(surrogate, space, n_points, excluded, sign, tolerance
         warnings.warn("local_best: no local optima found in random samples.")
         return []
 
-    # In high dimensions, isolated points (no neighbors) are all classified as
-    # local optima — cap at top-20 by predicted value to keep scipy calls bounded.
+    # Cap isolated points at top-20 to keep scipy calls bounded.
     if len(candidate_indices) > 20:
         candidate_indices = sorted(candidate_indices, key=lambda i: sign * preds[i], reverse=True)[:20]
 
@@ -169,11 +171,12 @@ def _continuous_local_best(surrogate, space, n_points, excluded, sign, tolerance
     merged.sort(key=lambda r: sign * r[1], reverse=True)
 
     all_excluded = excluded.copy() if excluded.shape[0] > 0 else np.empty((0, space.ndim))
+    n_meas = excluded.shape[0] if n_measured is None else n_measured
     results = []
     for point, pred_val in merged:
         if len(results) >= n_points:
             break
-        if is_duplicate(point, all_excluded, tolerance):
+        if is_rejected(point, all_excluded, n_meas, tolerance, batch_tolerance):
             continue
         results.append({
             "point": point.tolist(),

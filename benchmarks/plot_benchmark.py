@@ -45,7 +45,7 @@ ALGO_ORDER = ["GLOSS", "UCB-BO", "BO(EI)", "GA", "Random"]
 
 # Display names for legends/titles ONLY (data-lookup keys stay "UCB-BO"/"BO(EI)"
 # to match the result CSVs). Matches the renamed terminology in the paper.
-DISPLAY_NAME = {"UCB-BO": "BO-UCB", "BO(EI)": "BO-EI"}
+DISPLAY_NAME = {"UCB-BO": "BO-UCB", "BO(EI)": "BO-EI", "Random": "Random sampling"}
 def _disp(a):
     return DISPLAY_NAME.get(a, a)
 
@@ -215,8 +215,27 @@ def _row1_structure(ax, item, mode, label_letter, title, xlabel_pair,
     _add_panel_label(ax, label_letter, on_dark=on_dark)
 
 
+def _arrhenius_area_pct(grid=600, n_peaks=3, peak_width=0.08, seed=42):
+    """Share of the unit box where the continuous Arrhenius surface is within
+    95 % of its maximum, measured on a grid rather than on a candidate sample.
+
+    The manuscript quotes this number for the continuous surface, because the
+    candidate pool used for the plot is a 10k draw and its share moves with the
+    draw, while the area fraction does not.
+    """
+    from benchmarks.virtual_functions import arrhenius_yield
+
+    g = np.linspace(0.0, 1.0, grid)
+    xx, yy = np.meshgrid(g, g)
+    pts = np.column_stack([xx.ravel(), yy.ravel()])
+    y = arrhenius_yield(pts, n_peaks=n_peaks, noise_sigma=0.0,
+                        peak_width=peak_width, seed=seed)
+    return float((y >= 0.95 * y.max()).mean() * 100)
+
+
 def _row2_distribution(ax, y, label_letter, xlabel, cmap_name,
-                        show_ylabel=False, mode="hist", fs=None, ylabel=None):
+                        show_ylabel=False, mode="hist", fs=None, ylabel=None,
+                        annot_pct=None):
     """Row 2: y-value distribution colored by value using row-1's cmap.
 
     mode='hist' → histogram with bars filled at bin-center color (D, E).
@@ -229,9 +248,15 @@ def _row2_distribution(ax, y, label_letter, xlabel, cmap_name,
     y = np.asarray(y, dtype=float)
     y_min, y_opt = float(y.min()), float(y.max())
     rng_y = (y_opt - y_min) if y_opt > y_min else 1.0
-    thresh = y_min + 0.95 * rng_y
+    # 95 % of the observed range, the threshold the benchmark metric uses
+    # (threshold_95 = y_min + 0.95*(y_opt - y_min)). An earlier form (95 % of
+    # the maximum value, 0.95*y_opt) put the line below the target the benchmark
+    # actually scores against, so the printed share disagreed with the caption.
+    thresh = y_min + 0.95 * (y_opt - y_min)
     n_top = int((y >= thresh).sum())
     top_pct = n_top / len(y) * 100
+    if annot_pct is not None:
+        top_pct = float(annot_pct)
 
     cmap = plt.get_cmap(cmap_name)
 
@@ -286,7 +311,7 @@ def fig1_main():
          "cmap": "magma", "cbar_title": "Gap (Hartree)",
          "dist_mode": "hist"},
         {"key": "AR", "csv_name": "Arrhenius-2D",
-         "title": "Arrhenius-2D\n(Continuous distribution function)",
+         "title": "Arrhenius-2D (Continuous data)",
          "xlabel": r"$f(x)$", "structure": "function_heatmap",
          "axes_labels": (r"$x_1$", r"$x_2$"),
          "cmap": "Spectral_r", "cbar_title": r"$f(x)$",
@@ -310,7 +335,9 @@ def fig1_main():
         _row2_distribution(axes[1, i], raw[c["key"]]["y"],
                            LETTERS[3 + i], c["xlabel"], c["cmap"],
                            show_ylabel=(row2_ylabels[i] is not None),
-                           mode=c["dist_mode"], fs=FS, ylabel=row2_ylabels[i])
+                           mode=c["dist_mode"], fs=FS, ylabel=row2_ylabels[i],
+                           annot_pct=(_arrhenius_area_pct()
+                                      if c["key"] == "AR" else None))
 
     # Row 3: convergence (G, H, I) — legend on G, y-ticks shown on all panels
     for i, c in enumerate(cols):
@@ -794,22 +821,69 @@ def fig5_ratio_complexity():
 # Figure 6: Trajectory analysis on Arrhenius-2D (4 algorithms, single seed)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _split_main_points_blocks():
-    """bench_main_points.csv has no dataset/algo/seed columns. Reconstruct
-    blocks by init-row boundaries; the loop order in study_main is fixed:
-      datasets = [QM9-gap, Buchwald-Hartwig, Arrhenius-2D]  (outer)
-      seeds    = [47, 53, 59, 61, 67]                       (middle)
-      algos    = [GLOSS, UCB-BO, BO(EI), GA, Random]        (inner)
-    → 3 × 5 × 5 = 75 blocks, each starts where round=-1 & point_idx=0.
+# The published bench_main_points.csv carries no dataset, algorithm or seed
+# column, so it could only be cut back into runs by position, and the loop
+# order in study_main had to be hard-coded to read it. That breaks the moment
+# runner carry those three columns, so they are grouped by name instead, and
+# the positional reader stays only for the published file.
+
+_MAIN_LOOP_DATASETS = ["QM9-gap-100k", "Buchwald-Hartwig", "Arrhenius-2D"]
+_MAIN_LOOP_SEEDS = [47, 53, 59, 61, 67]
+_MAIN_LOOP_ALGOS = ["GLOSS", "UCB-BO", "BO(EI)", "GA", "Random"]
+
+
+def _split_main_points_blocks(path=None):
+    """Runs from a points file, cut by the init-row boundaries.
+
+    Kept for the published file only. A block starts where round=-1 and
+    point_idx=0; the loop order in study_main was datasets outermost, then
+    seeds, then algorithms. The count is checked against that order, because
+    reading a file with a different shape by position gives the wrong run
+    without saying so.
     """
-    df = pd.read_csv(os.path.join(RESULTS_DIR, "bench_main_points.csv"))
+    path = path or os.path.join(RESULTS_DIR, "bench_main_points.csv")
+    df = pd.read_csv(path)
     starts = df[(df["round"] == -1) & (df["point_idx"] == 0)].index.tolist()
-    assert len(starts) == 75, f"expected 75 blocks, got {len(starts)}"
+    expected = (len(_MAIN_LOOP_DATASETS) * len(_MAIN_LOOP_SEEDS)
+                * len(_MAIN_LOOP_ALGOS))
+    if len(starts) != expected:
+        raise ValueError(
+            f"{os.path.basename(path)} holds {len(starts)} runs, not the "
+            f"{expected} the fixed loop order describes, so it cannot be cut "
+            f"by position. Use _main_points_by_run() on a file that carries "
+            f"dataset, algorithm and seed columns."
+        )
     blocks = []
     for i, s in enumerate(starts):
         e = starts[i + 1] if i + 1 < len(starts) else len(df)
         blocks.append(df.iloc[s:e].reset_index(drop=True))
     return blocks
+
+
+def _main_points_by_run(path=None):
+    """Runs keyed by (dataset, algorithm, seed), however the file was written.
+
+    Grouping by column is used when the columns are there. Otherwise the
+    positional reader labels the blocks by the documented loop order, which
+    only holds for a file with the original three datasets, five seeds and
+    five algorithms.
+    """
+    path = path or os.path.join(RESULTS_DIR, "bench_main_points.csv")
+    df = pd.read_csv(path)
+    if {"dataset", "algorithm", "seed"} <= set(df.columns):
+        return {key: group.reset_index(drop=True)
+                for key, group in df.groupby(["dataset", "algorithm", "seed"])}
+
+    blocks = _split_main_points_blocks(path)
+    keyed = {}
+    for i, block in enumerate(blocks):
+        ds = _MAIN_LOOP_DATASETS[i // (len(_MAIN_LOOP_SEEDS)
+                                       * len(_MAIN_LOOP_ALGOS))]
+        rest = i % (len(_MAIN_LOOP_SEEDS) * len(_MAIN_LOOP_ALGOS))
+        seed = _MAIN_LOOP_SEEDS[rest // len(_MAIN_LOOP_ALGOS)]
+        algo = _MAIN_LOOP_ALGOS[rest % len(_MAIN_LOOP_ALGOS)]
+        keyed[(ds, algo, seed)] = block
+    return keyed
 
 
 def _heatmap_text_color(tx, ty, Z, vmin, vmax, cmap):
@@ -865,25 +939,29 @@ def _draw_trajectory(ax, df_algo, algo_name, x0g, x1g, Z, y_opt, y_min):
     ax.scatter(ib["x0"], ib["x1"], marker="P", s=100, color="white",
                edgecolors="black", linewidths=0.8, zorder=5)
 
-    # Per-round running best
+    # The best point of each round. The percentages below take the running
+    # maximum of these, so no separate running value is kept here.
     bpr = []
-    running = float(ib["y"])
     for r in sorted(all_rounds["round"].unique()):
         rs = all_rounds[all_rounds["round"] == r]
-        rec = rs.loc[rs["y"].idxmax()]
-        if rec["y"] > running:
-            running = float(rec["y"])
-        bpr.append(rec)
+        bpr.append(rs.loc[rs["y"].idxmax()])
     bpr = pd.DataFrame(bpr).reset_index(drop=True)
 
-    # Truncate at the first round whose running-best rounds to 100 % at the
-    # title's display precision (matches the {:.0f}% used in set_title below).
+    # No truncation. The whole budget is drawn and the first round at or above
+    # the 95% line is marked instead.
+    #
+    # The old rule cut the path at the first round reaching 99.5% and put a
+    # yellow marker there. On the continuous surface that line is out of
+    # reach: GLOSS averages 98.8% at the end of twenty rounds, so nothing was
+    # ever cut and no marker ever appeared. Worse, cutting would delete the
+    # evidence this figure exists for: an arm that stalls on the second peak
+    # sits on a plateau at about 73%, and that plateau is the thing to show.
+    # With no truncation a short path means one thing only, that the arm was
+    # fast, instead of meaning either that or "cut here".
     pct = (np.maximum.accumulate(np.concatenate([[ib["y"]], bpr["y"].to_numpy()]))[1:]
            - y_min) / (y_opt - y_min) * 100
-    reached = np.where(pct >= 99.5)[0]
-    if len(reached) > 0:
-        bpr = bpr.iloc[: reached[0] + 1].reset_index(drop=True)
-        pct = pct[: reached[0] + 1]
+    at_95 = np.where(pct >= 95.0)[0]
+    first_95 = int(at_95[0]) if len(at_95) else None
 
     lx = [ib["x0"]] + bpr["x0"].tolist()
     ly = [ib["x1"]] + bpr["x1"].tolist()
@@ -892,64 +970,33 @@ def _draw_trajectory(ax, df_algo, algo_name, x0g, x1g, Z, y_opt, y_min):
     ALGO_MARKER = {"GLOSS": "o", "UCB-BO": "s", "BO(EI)": "^", "GA": "D"}
     mk = ALGO_MARKER.get(algo_name, "o")
 
-    final_reached_100 = len(bpr) > 0 and float(pct[-1]) >= 99.5
-    n_plot = len(bpr) - 1 if final_reached_100 else len(bpr)
-    if n_plot > 0:
-        ax.scatter(bpr["x0"].iloc[:n_plot], bpr["x1"].iloc[:n_plot],
-                   marker=mk, s=55, color="white", alpha=0.95,
-                   edgecolors="black", linewidths=0.5, zorder=3)
-    if final_reached_100:
-        last = bpr.iloc[-1]
-        ax.scatter(last["x0"], last["x1"], marker=mk, s=55,
-                   color="yellow", alpha=0.95,
-                   edgecolors="black", linewidths=0.6, zorder=4)
-
-    # Round-number labels: round 1, round 2, the round at which running best
-    # first hit its final value, plus algo-specific extras.
-    EXTRA_ROUNDS = {"GA": [14]}  # 1-indexed round 15
-    # Manual overrides keyed by (algo_name, 1-indexed round).
-    # 'pos': absolute (x, y) in data coords; 'arrow': force a leader line.
-    LABEL_OVERRIDES = {
-        ("GA",      2): {"arrow": True},
-        ("GLOSS",   3): {"text": "3-10"},
-
-        # Panel B (UCB-BO): consolidate 3-5 and 15-20
-        ("UCB-BO",  3): {"text": "3-5"},
-        ("UCB-BO",  4): {"skip": True},
-        ("UCB-BO",  5): {"skip": True},
-        ("UCB-BO", 13): {"skip": True},
-        ("UCB-BO", 14): {"skip": True},
-        ("UCB-BO", 15): {"text": "15-20",
-                         "pos": (0.88, 0.50), "arrow": True},
-        ("UCB-BO", 16): {"skip": True},
-        ("UCB-BO", 17): {"skip": True},
-        ("UCB-BO", 18): {"skip": True},
-        ("UCB-BO", 19): {"skip": True},
-        ("UCB-BO", 20): {"skip": True},
-
-        # Panel C (BO(EI)): consolidate 3-5, "10,12-14", "15-17,19,20"
-        ("BO(EI)",  3): {"text": "3-5"},
-        ("BO(EI)",  4): {"skip": True},
-        ("BO(EI)",  5): {"skip": True},
-        ("BO(EI)",  7): {"skip": True},
-        ("BO(EI)", 10): {"skip": True},
-        ("BO(EI)", 12): {"skip": True},
-        ("BO(EI)", 13): {"text": "10,12-14"},
-        ("BO(EI)", 14): {"skip": True},
-        ("BO(EI)", 15): {"text": "15-17,19,20",
-                         "pos": (0.88, 0.55), "arrow": True},
-        ("BO(EI)", 16): {"skip": True},
-        ("BO(EI)", 17): {"skip": True},
-        ("BO(EI)", 19): {"skip": True},
-        ("BO(EI)", 20): {"skip": True},
-    }
+    # Every round in white, and the first round at the 95% line in yellow.
     if len(bpr) > 0:
-        running = np.maximum.accumulate(bpr["y"].to_numpy())
-        peak_idx = int(np.argmax(running))
-        if algo_name in ("UCB-BO", "BO(EI)", "GA"):
-            wanted = set(range(len(bpr)))
-        else:
-            wanted = {0, 1, 2, peak_idx} | set(EXTRA_ROUNDS.get(algo_name, []))
+        ax.scatter(bpr["x0"], bpr["x1"], marker=mk, s=55, color="white",
+                   alpha=0.95, edgecolors="black", linewidths=0.5, zorder=3)
+    if first_95 is not None:
+        hit = bpr.iloc[first_95]
+        ax.scatter(hit["x0"], hit["x1"], marker=mk, s=55, color="yellow",
+                   alpha=0.95, edgecolors="black", linewidths=0.6, zorder=4)
+
+    # Round labels. The overrides below were hand-tuned to the published
+    # discrete run on seed 61 and are cleared here: every entry was keyed on a
+    # (arm, round) pair of that run, several of them carried assertions in
+    # their text ("3-10", "10,12-14", "15-17,19,20") and a dozen were skips,
+    # so on the new data they would print wrong round ranges and silently
+    # swallow labels that should show. They are re-tuned after the figure has
+    # been drawn once, not before.
+    # LABEL_OVERRIDES stays: the positions still need hand-tuning once the
+    # figure has been drawn. EXTRA_ROUNDS is gone, because every round is
+    # labelled now and an "extra" round cannot add anything.
+    LABEL_OVERRIDES = {}
+    if len(bpr) > 0:
+        # One rule for all four panels. The old code labelled every round for
+        # the three baselines and only four rounds for GLOSS, which drew our
+        # own method clean and the baselines cluttered: under a comment that
+        # asks whether the advantage comes from the batch construction, that
+        # is an avoidable target.
+        wanted = set(range(len(bpr)))
         annotate_idx = sorted(i for i in wanted if 0 <= i < len(bpr))
 
         # All scatter points are obstacles; we'll exclude the labelled point itself.
@@ -1002,45 +1049,71 @@ def _draw_trajectory(ax, df_algo, algo_name, x0g, x1g, Z, y_opt, y_min):
             # Now this label is itself an obstacle for later labels.
             scatter_pts.append((tx, ty))
 
-    final_pct = float(pct[len(bpr) - 1]) if len(bpr) > 0 else 0.0
-    title_peak_round = (peak_idx + 1) if len(bpr) > 0 else 0
+    final_pct = float(pct[-1])
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.set_xlabel(r"$x_1$", fontsize=10)
     ax.set_ylabel(r"$x_2$", fontsize=10)
     ax.tick_params(labelsize=10)
-    ax.set_title(f"{_disp(algo_name)} ({final_pct:.0f}% optimum by Round {title_peak_round})",
+    # Two cases, said apart: reached the line at round N, or never reached it
+    # and ended at X%. One sentence cannot carry both without being read wrong.
+    if first_95 is not None:
+        head = f"95% at Round {first_95 + 1}, ends at {final_pct:.1f}%"
+    else:
+        head = f"never reaches 95%, ends at {final_pct:.1f}%"
+    ax.set_title(f"{_disp(algo_name)} ({head})",
                  fontsize=10, fontweight="bold", pad=4)
 
     handles = [
         Line2D([0], [0], marker="P", color="w", markerfacecolor="white",
-               markersize=9, markeredgecolor="black", label="init best", lw=0),
+               markersize=9, markeredgecolor="black", label="initial", lw=0),
         Line2D([0], [0], marker=mk, color="w", markerfacecolor="white",
                markersize=8, markeredgecolor="black",
                label=f"{_disp(algo_name)} per-round best", lw=0),
     ]
-    if final_reached_100:
+    if first_95 is not None:
         handles.append(
             Line2D([0], [0], marker=mk, color="w", markerfacecolor="yellow",
                    markersize=8, markeredgecolor="black",
-                   label="reached 100%", lw=0))
+                   label="first round at 95%", lw=0))
     ax.legend(handles=handles, loc="lower left", fontsize=10,
               framealpha=0.85, edgecolor="#cccccc")
 
 
+#: The trajectory figure and paper/verify_trajectory.py share these four.
+#: Two copies would be free to drift, and the whole point of the verify
+#: script is that it can be checked against the figure.
+SEED_PICK = 89
+DATASET = "Arrhenius-2D-cont"
+#: The re-run names the arm by its ratio; the figure's markers, titles and
+#: legend are keyed on the short name.
+ARM_IN_FILE = {"GLOSS": "GLOSS(4:2:2)", "GA": "GA",
+               "BO(EI)": "BO(EI)", "UCB-BO": "UCB-BO"}
+POINTS_CSV = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "results/rerun_arrhenius_step55_points.csv")
+
+
+def continuous_denominator():
+    """The pair the continuous runs divide by: the surface optimum and minimum.
+
+    The discrete pool maximum is 18.09932209205459, which is 1.40% lower, so
+    mixing the two shifts every percentage. Both ends are returned because
+    pct_opt is (y - y_min) / (y_opt - y_min) and the discrete pool's y_min is
+    not zero either.
+    """
+    from benchmarks import reference_values
+    ref = reference_values.get("arrhenius", n_peaks=3, peak_width=0.08,
+                               noise_sigma=0.0, seed=42)
+    return float(ref["y_opt"]), float(ref["y_min"])
+
+
 def fig6_trajectory():
-    """Arrhenius-2D trajectories for 4 algorithms, single seed (2×2)."""
     from benchmarks.virtual_functions import arrhenius_yield
 
-    SEEDS = [47, 53, 59, 61, 67]
-    ALGOS_ALL = ["GLOSS", "UCB-BO", "BO(EI)", "GA", "Random"]
-    SEED_PICK = 61
     ALGOS_PLOT = ["GLOSS", "GA", "BO(EI)", "UCB-BO"]   # B/D slots swapped
-
-    blocks = _split_main_points_blocks()
-    AR_START = 50  # Arrhenius is the 3rd dataset → blocks 50–74
-    s_idx = SEEDS.index(SEED_PICK)
-    panels = {a: blocks[AR_START + s_idx * 5 + ALGOS_ALL.index(a)]
+    runs = _main_points_by_run(POINTS_CSV)
+    panels = {a: runs[(DATASET, ARM_IN_FILE[a], SEED_PICK)]
               for a in ALGOS_PLOT}
 
     xs = np.linspace(0, 1, 300)
@@ -1048,11 +1121,7 @@ def fig6_trajectory():
     Z = arrhenius_yield(np.column_stack([XX.ravel(), YY.ravel()]),
                         n_peaks=3, peak_width=0.08, noise_sigma=0.0,
                         seed=42).reshape(XX.shape)
-    # Use the same y_opt the benchmark uses (max over the 10k candidate pool)
-    # so subplot percentages match bench_main_summary.csv exactly.
-    ar_y = _load_main_fig_data()["AR"]["y"]
-    y_opt = float(ar_y.max())
-    y_min = float(ar_y.min())
+    y_opt, y_min = continuous_denominator()
 
     fig, axes = plt.subplots(2, 2, figsize=(10, 9.5))
     LETTERS = "ABCD"

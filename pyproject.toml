@@ -4,18 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gloss-opt"
-version = "1.0.1"
+version = "1.0.2"
 description = "GLOSS: Global-LOcal-unexplored Sampling Strategy for surrogate-based optimization in vast chemical spaces"
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.9"
+requires-python = ">=3.9,<3.13"  # numpy 1.26.4 has no wheel past 3.12
 authors = [
   { name = "Baicheng Zhang", email = "zbc@mail.ustc.edu.cn" },
 ]
 dependencies = [
-  "numpy>=1.21",
-  "scipy>=1.7",
-  "scikit-learn>=1.0",
+  "numpy==1.26.4",
+  "scipy==1.13.1",
+  "scikit-learn==1.6.1",
 ]
 
 [project.optional-dependencies]
