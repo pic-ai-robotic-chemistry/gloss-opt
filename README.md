@@ -32,7 +32,7 @@ cd gloss-opt
 pip install -e .
 ```
 
-Requires Python >= 3.9. Core dependencies: numpy, scipy, scikit-learn.
+Requires Python 3.9 to 3.12. Core dependencies: numpy, scipy, scikit-learn.
 Optional surrogate backends (torch, xgboost, lightgbm) and benchmark extras
 (pandas, matplotlib, rdkit, openpyxl) install with:
 
@@ -82,22 +82,33 @@ proposed it. Continuous spaces are supported via `mode="continuous"` and
 
 ## Reproducing the paper benchmarks
 
-The benchmark compares GLOSS against four baselines (BO-EI, BO-UCB, GA, and
-random sampling) on three chemical datasets, with all algorithms sharing one
-Random Forest surrogate and identical bottom-20% initializations.
+The paper's comparison runs nine arms on three chemical datasets: the GLOSS
+4:2:2 arm, its two batch-diversity ablation arms (8:0:0 with and without the
+radius), pointwise BO-EI and BO-UCB, the batch-aware qPO and parallel Thompson
+sampling, a genetic algorithm, and random sampling. Every arm shares one
+Random Forest surrogate and one bottom-20% initialization.
+
+`--study main9` runs that comparison with twenty seeds. `--study main` is the
+legacy five-arm study (GLOSS, UCB-BO, BO(EI), GA, Random) with five seeds by
+default and at most ten. `--study pilot` is the quick validation.
 
 ```bash
 # Quick validation (1 seed, 10 rounds)
 python -m benchmarks.bench_main --study pilot
 
+# The comparison the paper reports: 3 datasets x 9 arms, 20 seeds
+python -m benchmarks.bench_main --study main9
+
+# The legacy five-arm study (5 seeds, at most 10 with --seeds)
+python -m benchmarks.bench_main --study main
+
 # Individual studies
-python -m benchmarks.bench_main --study main         # 3 datasets x 5 algorithms
 python -m benchmarks.bench_main --study scaling      # QM9 pool 5k -> 100k
 python -m benchmarks.bench_main --study complexity   # Arrhenius C1 -> C5
 python -m benchmarks.bench_main --study ratio_scaling
 python -m benchmarks.bench_main --study ratio_complexity
 
-# Everything (5 seeds; several hours on a single machine)
+# Everything (the legacy five-arm study plus the four sweeps; hours)
 python -m benchmarks.bench_main --study all
 
 # Local top-K ablation (Supporting Information S2)
@@ -108,8 +119,14 @@ python -m benchmarks.plot_benchmark
 ```
 
 Result CSVs land in `benchmarks/results/` and figures in `benchmarks/plots/`.
-The CSVs backing the published figures are included in this repository, so
-`plot_benchmark.py` reproduces every figure without re-running the campaigns.
+`--study main9` writes `bench_main9_summary.csv` and `bench_main9_points.csv`;
+the legacy study writes `bench_main_*`. A run with the default suffix overwrites
+the published numbers, so use `--out-suffix` for a check run.
+
+`benchmarks/results/` carries the result CSVs of the legacy five-arm,
+five-seed study, and `plot_benchmark.py` draws from those. It does not read the
+`bench_main9_*` files, and the nine-arm twenty-seed numbers of the paper are
+not in this checkout.
 
 ### Datasets
 

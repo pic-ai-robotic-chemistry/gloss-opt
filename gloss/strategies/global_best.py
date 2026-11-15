@@ -1,19 +1,11 @@
 import warnings
 import numpy as np
 from scipy.optimize import minimize
-from gloss.utils import is_duplicate
+from gloss.utils import is_batch_rejected, is_rejected
 
 
 def _ucb_predict(surrogate, X, sign, kappa):
-    """Compute UCB/LCB acquisition scores.
-
-    UCB for maximize: mu + kappa*sigma
-    LCB for minimize: mu - kappa*sigma
-    Unified formula for 'score to maximize descending': sign*mu + kappa*sigma
-
-    Falls back to plain predict if surrogate doesn't support return_std.
-    Returns (acquisition_scores, mean_predictions).
-    """
+    """Compute UCB or LCB acquisition scores."""
     if kappa > 0:
         try:
             mu, sigma = surrogate.predict(X, return_std=True)
@@ -27,31 +19,26 @@ def _ucb_predict(surrogate, X, sign, kappa):
 
 def find_global_best(surrogate, space, n_points, excluded, direction,
                      tolerance=0.0, n_random_samples=10000, n_top=10, kappa=2.0,
-                     diversity_radius=0.0, diversity_metric="euclidean"):
-    """Find globally optimal points according to surrogate predictions.
-
-    Uses UCB acquisition (mu + kappa*sigma) when the surrogate supports
-    uncertainty estimation, otherwise falls back to plain predicted value.
-    kappa=0 disables UCB and uses pure predicted mean.
-
-    diversity_radius: minimum distance between selected points in the batch.
-        0.0 (default) disables diversity enforcement.
-    diversity_metric: 'euclidean' (default) or 'jaccard' for Tanimoto distance.
-    """
+                     diversity_radius=0.0, diversity_metric="euclidean",
+                     n_measured=None, batch_tolerance=None):
+    """Select the globally best points by UCB acquisition."""
     sign = 1.0 if direction == "maximize" else -1.0
 
     if space.mode == "discrete":
         return _discrete_global_best(surrogate, space, n_points, excluded, sign, tolerance, kappa,
-                                     diversity_radius, diversity_metric)
+                                     diversity_radius, diversity_metric,
+                                     n_measured, batch_tolerance)
     else:
         return _continuous_global_best(
             surrogate, space, n_points, excluded, sign, tolerance,
-            n_random_samples, n_top, kappa, diversity_radius, diversity_metric
+            n_random_samples, n_top, kappa, diversity_radius, diversity_metric,
+            n_measured, batch_tolerance
         )
 
 
 def _discrete_global_best(surrogate, space, n_points, excluded, sign, tolerance, kappa,
-                           diversity_radius=0.0, diversity_metric="euclidean"):
+                           diversity_radius=0.0, diversity_metric="euclidean",
+                           n_measured=None, batch_tolerance=None):
     candidates = space.get_candidates_excluding(excluded, tolerance)
     if len(candidates) == 0:
         warnings.warn("global_best: no candidates available after exclusion.")
@@ -62,11 +49,17 @@ def _discrete_global_best(surrogate, space, n_points, excluded, sign, tolerance,
 
     selected_points = []
     results = []
+    # Points already chosen in this batch.
+    n_meas = excluded.shape[0] if n_measured is None else n_measured
+    batch_points = [row for row in excluded[n_meas:]]
 
     for idx in order:
         if len(results) >= n_points:
             break
         point = candidates[idx]
+
+        if is_batch_rejected(point, batch_points, tolerance, batch_tolerance):
+            continue
 
         # Diversity check against already-selected points in this batch
         if diversity_radius > 0 and selected_points:
@@ -89,6 +82,7 @@ def _discrete_global_best(surrogate, space, n_points, excluded, sign, tolerance,
             "predicted_value": float(preds[idx]),
         })
         selected_points.append(point)
+        batch_points.append(point)
 
     if len(results) < n_points:
         warnings.warn(f"global_best: only found {len(results)}/{n_points} points "
@@ -98,7 +92,8 @@ def _discrete_global_best(surrogate, space, n_points, excluded, sign, tolerance,
 
 def _continuous_global_best(surrogate, space, n_points, excluded, sign, tolerance,
                              n_random_samples, n_top, kappa,
-                             diversity_radius=0.0, diversity_metric="euclidean"):
+                             diversity_radius=0.0, diversity_metric="euclidean",
+                             n_measured=None, batch_tolerance=None):
     samples = space.sample(n_random_samples)
     if len(samples) == 0:
         warnings.warn("global_best: no feasible samples generated.")
@@ -144,10 +139,11 @@ def _continuous_global_best(surrogate, space, n_points, excluded, sign, toleranc
     all_excluded = excluded.copy() if excluded.shape[0] > 0 else np.empty((0, space.ndim))
     selected_points = []
     results = []
+    n_meas = excluded.shape[0] if n_measured is None else n_measured
     for point, pred_val in refined:
         if len(results) >= n_points:
             break
-        if is_duplicate(point, all_excluded, tolerance):
+        if is_rejected(point, all_excluded, n_meas, tolerance, batch_tolerance):
             continue
 
         # Diversity check against already-selected points in this batch
@@ -179,7 +175,8 @@ def _continuous_global_best(surrogate, space, n_points, excluded, sign, toleranc
             if len(results) >= n_points:
                 break
             point = samples[idx]
-            if is_duplicate(point, all_excluded, tolerance):
+            if is_rejected(point, all_excluded, n_meas, tolerance,
+                           batch_tolerance):
                 continue
 
             # Diversity check in fallback loop

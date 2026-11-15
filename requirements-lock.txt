@@ -1,0 +1,26 @@
+# Versions of the environment that produced the step-13 numbers.
+#
+# Recorded by the runs themselves (revision1/rerun/results/rerun_*_step13_environment.txt):
+#   python 3.9.6, numpy 1.26.4, pandas 2.3.3, scikit-learn 1.6.1, scipy 1.13.1
+# The four packages below are those recorded versions.
+#
+# The extras under them are read by hand from the machine that ran the work,
+# not by the recorder: rdkit fixes the twenty molecular descriptors, matplotlib
+# fixes the figures, openpyxl reads the Buchwald-Hartwig workbook.
+#
+# Interpreter: /Library/Developer/CommandLineTools/usr/bin/python3
+# Install: python3 -m pip install -r requirements-lock.txt
+
+numpy==1.26.4
+scipy==1.13.1
+pandas==2.3.3
+scikit-learn==1.6.1
+
+# rdkit: the module reports 2022.09.5 while the distribution metadata of the
+# same site-packages reports 2025.9.2, because two distributions share the
+# directory (rdkit_pypi-2022.9.5 and rdkit-2025.9.2). Pin the one that pip
+# resolves; check import rdkit; rdkit.__version__ after install.
+rdkit==2025.9.2
+matplotlib==3.9.4
+openpyxl==3.1.5
+pytest==8.4.2

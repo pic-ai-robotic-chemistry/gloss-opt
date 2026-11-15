@@ -14,7 +14,8 @@ class GLOSS:
                  window_radius=None, unexplored_threshold=None,
                  n_random_samples=10000, n_top_for_optimization=10,
                  cv_folds=5, scoring="neg_root_mean_squared_error",
-                 duplicate_tolerance=None, custom_sampler=None,
+                 duplicate_tolerance=None, batch_tolerance=None,
+                 custom_sampler=None,
                  ucb_kappa=2.0,
                  kappa_schedule="fixed",   # 'fixed', 'decay', 'cosine'
                  kappa_min=0.5,
@@ -25,8 +26,9 @@ class GLOSS:
                  distance_metric="euclidean",    # passed to local_best and unexplored
                  diversity_radius=0.0,           # passed to global_best
                  diversity_metric="euclidean",   # passed to global_best
-                 local_top_k=None,               # O(K) trunc for local_best (None=default 500;
-                                                 # 0=full O(n); int=explicit override; ablation only)
+                 novelty_signal="distance",      # 'distance' or 'sigma', see strategies/unexplored
+                 novelty_quantile=None,          # None uses the absolute threshold
+                 local_top_k=None,               # O(K) truncation for local_best (None=default 500; 0=full O(n); int=override)
                  seed=None):                     # RNG seed for reproducibility
         if direction not in ("minimize", "maximize"):
             raise ValueError(f"direction must be 'minimize' or 'maximize', got '{direction}'")
@@ -60,28 +62,52 @@ class GLOSS:
         self.local_top_k = local_top_k
         self.diversity_radius = diversity_radius
         self.diversity_metric = diversity_metric
+        # Rank gate for the unexplored strategy. Defaults use an absolute distance threshold.
+        if novelty_signal not in ("distance", "sigma"):
+            raise ValueError(
+                f"novelty_signal must be 'distance' or 'sigma', got {novelty_signal!r}"
+            )
+        if novelty_quantile is not None and not (0.0 < float(novelty_quantile) <= 1.0):
+            raise ValueError(
+                "novelty_quantile must be in (0, 1] or None, got "
+                f"{novelty_quantile!r}"
+            )
+        self.novelty_signal = novelty_signal
+        self.novelty_quantile = novelty_quantile
+        #: Set by the unexplored strategy on each recommend() call.
+        self.last_novelty_stats = None
         if adaptive_strategy:
             self._strategy_wins = {"global_best": 0, "local_best": 0,
                                    "unexplored": 0, "unconverged": 0}
-            # Initial tries = 1 (not 0): Laplace smoothing.
-            # Prevents division-by-zero in UCB-1 and gives all strategies equal prior
-            # probability before any feedback is received.
+            # Laplace smoothing: initial tries = 1 avoids division-by-zero in UCB-1.
             self._strategy_tries = {"global_best": 1, "local_best": 1,
                                     "unexplored": 1, "unconverged": 1}
         else:
             self._strategy_wins = None
             self._strategy_tries = None
 
+        # duplicate_tolerance keeps a new point away from measured points;
+        # batch_tolerance keeps points of one batch apart. None uses one
+        # distance for both.
+        self.batch_tolerance = batch_tolerance
+        # In discrete mode the candidate filter already removes rows within
+        # duplicate_tolerance, so a smaller batch_tolerance has no effect.
+        if (mode == "discrete" and batch_tolerance is not None
+                and duplicate_tolerance is not None
+                and batch_tolerance < duplicate_tolerance):
+            raise ValueError(
+                f"batch_tolerance={batch_tolerance} is below "
+                f"duplicate_tolerance={duplicate_tolerance} in discrete mode, "
+                f"where the candidate filter has already removed those rows. "
+                f"A batch distance below the measured distance has no effect "
+                f"there, so this combination would be silently ignored.")
         if duplicate_tolerance is not None:
             self.duplicate_tolerance = duplicate_tolerance
         elif mode == "discrete":
             self.duplicate_tolerance = 0.0
         else:
-            # For continuous spaces, use diversity_radius as the cross-round
-            # exclusion distance so that new recommendations aren't placed
-            # within diversity_radius of any previously observed point.
-            # Falls back to 0.1% of the space diagonal when diversity_radius
-            # is not set.
+            # In continuous mode, keep new points at least diversity_radius (or
+            # 0.1% of the space diagonal) from observed points.
             self.duplicate_tolerance = max(
                 diversity_radius, self.space.diagonal * 0.001
             )
@@ -96,16 +122,7 @@ class GLOSS:
                                     "unexplored": 1, "unconverged": 1}
 
     def _get_kappa(self, round_num):
-        """Return κ for the given round according to schedule.
-
-        'fixed':  constant ucb_kappa throughout
-        'decay':  ucb_kappa * kappa_decay^round_num, floored at kappa_min
-        'cosine': cosine annealing from ucb_kappa to kappa_min over n_rounds
-
-        Note: kappa is passed only to global_best. Other strategies
-        (local_best, unexplored, unconverged) use different signals and
-        intentionally do not use kappa.
-        """
+        """Return the acquisition weight kappa for the current round."""
         import math
         if self.kappa_schedule == "fixed":
             return self.ucb_kappa
@@ -122,13 +139,7 @@ class GLOSS:
             )
 
     def feedback(self, results_with_y, current_best_before):
-        """Update bandit allocation based on which strategy improved best-so-far.
-
-        Args:
-            results_with_y: list of result dicts from recommend(), each with
-                            'strategy', 'point', and 'y_actual' (added by user).
-            current_best_before: best y value before this batch was evaluated.
-        """
+        """Update the bandit allocation after evaluating a batch."""
         if not self.adaptive_strategy:
             return
 
@@ -161,11 +172,7 @@ class GLOSS:
                     self._strategy_wins[s] += 1
 
     def _bandit_allocation(self, total_points, base_strategy_points=None):
-        """Compute allocation using UCB-1 bandit scores, summing to total_points.
-
-        Strategies with 0 in base_strategy_points stay at 0 (disabled strategies
-        are not activated by the bandit).
-        """
+        """Compute the bandit allocation summing to total_points."""
         import math
         if base_strategy_points is None:
             base_strategy_points = {
@@ -249,6 +256,10 @@ class GLOSS:
             excluded = np.empty((0, self.space.ndim))
 
         tol = self.duplicate_tolerance
+        # Everything in excluded up to this row is a measured point. The rows
+        # the strategies add below are batch mates and get batch_tolerance.
+        n_measured = excluded.shape[0]
+        batch_tol = self.batch_tolerance
         results = []
 
         current_kappa = self._get_kappa(self._round)
@@ -268,6 +279,8 @@ class GLOSS:
                 kappa=current_kappa,
                 diversity_radius=self.diversity_radius,
                 diversity_metric=self.diversity_metric,
+                n_measured=n_measured,
+                batch_tolerance=batch_tol,
             )
             results.extend(gb_results)
             for r in gb_results:
@@ -288,6 +301,8 @@ class GLOSS:
                 n_random_samples=self.n_random_samples,
                 distance_metric=self.distance_metric,
                 top_k=self.local_top_k,
+                n_measured=n_measured,
+                batch_tolerance=batch_tol,
             )
             results.extend(lb_results)
             for r in lb_results:
@@ -298,6 +313,7 @@ class GLOSS:
         n_ue = strategy_points.get("unexplored", 0)
         if n_ue > 0:
             explored = excluded.copy()
+            novelty_stats = {}
             ue_results = find_unexplored(
                 surrogate=current_surrogate,
                 space=self.space,
@@ -309,7 +325,13 @@ class GLOSS:
                 unexplored_threshold=self.unexplored_threshold,
                 n_random_samples=self.n_random_samples,
                 distance_metric=self.distance_metric,
+                n_measured=n_measured,
+                batch_tolerance=batch_tol,
+                novelty_signal=self.novelty_signal,
+                novelty_quantile=self.novelty_quantile,
+                stats_out=novelty_stats,
             )
+            self.last_novelty_stats = novelty_stats or None
             results.extend(ue_results)
             for r in ue_results:
                 if "point" in r:
@@ -326,6 +348,8 @@ class GLOSS:
                 X_obs=X_train if X_train is not None else np.empty((0, self.space.ndim)),
                 tolerance=tol,
                 n_random_samples=self.n_random_samples,
+                n_measured=n_measured,
+                batch_tolerance=batch_tol,
             )
             results.extend(uc_results)
             for r in uc_results:

@@ -1,20 +1,12 @@
 import warnings
 import numpy as np
-from gloss.utils import compute_min_distances, is_duplicate
+from gloss.utils import compute_min_distances, is_rejected
 
 
 def find_unconverged(surrogate, space, n_points, excluded, X_obs,
-                     tolerance=0.0, n_random_samples=10000):
-    """Find points with highest surrogate uncertainty (pure σ-driven).
-
-    Redesigned from prev-vs-current model comparison to maximum uncertainty
-    sampling. Targets regions where the surrogate is least confident,
-    complementing global_best (UCB = μ+κσ) which balances both terms.
-
-    Uncertainty source (in priority order):
-    1. surrogate.predict(X, return_std=True) → use σ directly
-    2. Fallback: min-distance to X_obs (farther = less certain)
-    """
+                     tolerance=0.0, n_random_samples=10000,
+                     n_measured=None, batch_tolerance=None):
+    """Select points with the highest surrogate uncertainty."""
     if space.mode == "discrete":
         candidates = space.get_candidates_excluding(excluded, tolerance)
     else:
@@ -48,12 +40,13 @@ def find_unconverged(surrogate, space, n_points, excluded, X_obs,
     order = np.argsort(uncertainty)[::-1]
 
     all_excluded = excluded.copy() if excluded.shape[0] > 0 else np.empty((0, space.ndim))
+    n_meas = excluded.shape[0] if n_measured is None else n_measured
     results = []
     for idx in order:
         if len(results) >= n_points:
             break
         point = candidates[idx]
-        if is_duplicate(point, all_excluded, tolerance):
+        if is_rejected(point, all_excluded, n_meas, tolerance, batch_tolerance):
             continue
         results.append({
             "point": point.tolist(),
