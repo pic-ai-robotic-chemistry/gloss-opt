@@ -1,20 +1,8 @@
-"""GLOSS against batch-aware baselines, requested by Reviewer 2.
+"""Historical five-seed batch-aware comparison on fixed candidate libraries.
 
-The published benchmark compared GLOSS with BO baselines that build a batch by
-taking the top q values of a pointwise acquisition function. Reviewer 2 asked
-for baselines that construct the batch as a batch, naming qPO and Thompson
-sampling. Both are added here, both driven by the same random forest surrogate
-as every other algorithm, so the comparison still isolates the selection rule.
-
-Arms:
-    GLOSS(4:2:2)   the published algorithm
-    qPO            multipoint probability of optimality (Fromer et al. 2025)
-    Thompson       parallel Thompson sampling (Hernandez-Lobato et al. 2017)
-    UCB-BO         greedy top-q UCB, kept so the table ties back to the paper
-    BO(EI)         greedy top-q expected improvement, the published baseline
-
-Protocol matches the main study: 8 initial points drawn from the bottom 20% of
-each pool, batches of 8, 20 rounds, the same five seeds.
+GLOSS, qPO, parallel Thompson sampling, UCB-BO and BO(EI) share the RF
+surrogate and bottom-quintile initialization. The twenty-seed main study
+can be run with benchmarks.bench_main --study paper.
 
 Usage:
     python -m benchmarks.bench_batch_aware --study pilot

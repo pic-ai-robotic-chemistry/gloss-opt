@@ -1,18 +1,8 @@
-"""Scaling study with qPO added, to test the paper's second claim.
+"""Three-arm QM9 scaling experiment with GLOSS(4:2:2), qPO and UCB-BO.
 
-The published scaling study (Study 2) swept QM9-gap from 5,000 to 100,000
-candidates against greedy BO baselines and reported that the GLOSS advantage
-widens with pool size. qPO was not in that comparison, and on the main study it
-matches GLOSS at n = 100,000. This script repeats the sweep with qPO in it.
-
-Arms:
-    GLOSS(4:2:2)   the published algorithm
-    qPO            multipoint probability of optimality (Fromer et al. 2025)
-    UCB-BO         greedy top-q UCB, kept as the anchor to the published curve
-
-Protocol matches study_scaling in bench_main.py: the pool is rebuilt at each
-size with load_qm9(n_samples=n), 8 initial points from the bottom 20%, batches
-of 8, 20 rounds.
+Each library is sampled with load_qm9. The experiment uses eight initial
+points from the bottom quintile and requests eight points per round for
+twenty rounds. See reproduction.studies.scaling for the seven-arm study.
 
 Usage:
     python -m benchmarks.bench_scaling_batch_aware --scales 20000 --seeds 1
@@ -37,11 +27,7 @@ THRESHOLD = 95.0
 CENSOR_VALUE = N_ROUNDS + 1
 DEFAULT_SCALES = list(range(5000, 105000, 5000))
 
-# The published studies use five seeds. Reviewer 2 asked for more independent
-# runs, and here the cost is dominated by rebuilding the candidate pool at each
-# size rather than by the runs themselves, so the set is extended. The first
-# five are the published ones, so those runs stay comparable; the rest continue
-# the same sequence of primes.
+# The scaling experiment uses the first ten paper seeds.
 ALL_SEEDS = SEEDS_10
 
 

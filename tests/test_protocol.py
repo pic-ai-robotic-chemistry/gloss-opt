@@ -97,7 +97,7 @@ def test_the_filter_refuses_a_surrogate_the_protocol_never_measured():
 
 def test_the_guard_admits_another_family_only_against_evidence():
     protocol.require("gaussian_process",
-                     refinement_evidence="measure_protocol.py, largest step 0.31")
+                     refinement_evidence="synthetic refinement evidence for the protocol test")
     with pytest.raises(ValueError):
         protocol.require("gaussian_process")
     with pytest.raises(ValueError):

@@ -1,25 +1,9 @@
-"""Ablation: batch diversification vs. strategy decomposition.
+"""Historical five-seed ablation of the GLOSS strategy split and diversity radius.
 
-Reviewer 2 (ci-2026-02855a) noted that the BO baselines form a batch by taking
-the top-q values of a pointwise acquisition function, while GLOSS both
-decomposes the batch across strategies AND enforces a minimum distance between
-batch points (diversity_radius). The reported advantage could therefore come
-from batch diversification alone.
-
-This study separates the two effects. All four arms share the same RF
-surrogate, the same bottom-20% initialisation, q = 8, 20 rounds and the same
-five seeds as the main study:
-
-    GLOSS(4:2:2)        decomposition + diversification  (the published algorithm)
-    GLOSS(8:0:0)+div    diversification only             <- the arm that matters
-    GLOSS(8:0:0)        neither                          (sanity check: should
-                                                          reproduce UCB-BO)
-    UCB-BO              neither                         (greedy top-q)
-
-Reading the result:
-    8:0:0+div close to 4:2:2       -> the gain is diversification, not decomposition
-    8:0:0+div close to UCB-BO      -> the gain is decomposition, as published
-    in between                     -> both contribute; report the split
+The four arms share an RF surrogate, eight bottom-quintile starting points
+and twenty rounds. Arrhenius uses a finite library in this experiment.
+Mean time to target here is conditional on success; the twenty-seed paper
+comparison uses a continuous Arrhenius surface and scores missed targets as 21.
 
 Usage:
     python -m benchmarks.bench_ablation_diversity --study pilot   # 1 seed, 5 rounds
@@ -109,8 +93,7 @@ def report(df, n_rounds):
 
     t95 is the first round reaching 95% of the pool optimum, 1-indexed to match
     the paper. Runs that never reach it are reported separately as a success
-    rate instead of being folded into the mean, which is what Reviewer 2 asked
-    for.
+    rate. The mean is over successful seeds.
     """
     print("\n" + "=" * 68)
     print("t95 = rounds to 95% of pool optimum (lower is better; budget = "

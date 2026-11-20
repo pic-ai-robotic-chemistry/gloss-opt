@@ -1,5 +1,7 @@
 import numpy as np
 import pytest
+pytest.importorskip("torch")
+
 from gloss.surrogate.nn_models import get_nn_model_configs
 
 

@@ -1,10 +1,9 @@
-"""Unified algorithm interfaces for benchmarking.
+"""Batch recommendation algorithms for the discrete and continuous benchmarks.
 
-All algorithms use the same fixed-hyperparameter GP surrogate:
-  ConstantKernel(1.0) * Matern(nu=2.5, length_scale=1.0), alpha=1e-5
-
-Each algorithm exposes:
-  recommend(X_observed, y_observed, candidates_or_space, n_points) -> indices or points
+The main experiment supplies a random-forest surrogate to model-based arms;
+the GP sensitivity study supplies a Gaussian process. Random sampling uses
+the candidate pool directly. The runner calls recommend_discrete() or
+recommend_continuous() according to the search space.
 """
 
 import time
@@ -91,7 +90,7 @@ class GLOSSAlgorithm:
         """Recommend from discrete candidates.
 
         Returns:
-            (all_indices, global_indices): all recommended indices and global_best-only indices.
+            (indices, strategies): candidate indices and their per-point strategy labels.
         """
         from gloss import GLOSS
 
@@ -143,7 +142,7 @@ class GLOSSAlgorithm:
         candidates the baselines did.
 
         Returns:
-            (all_points, global_points): all recommended points and global_best-only points.
+            (points, strategies): coordinates and their per-point strategy labels.
         """
         from gloss import GLOSS
 
@@ -155,9 +154,7 @@ class GLOSSAlgorithm:
             mode="continuous",
             direction="maximize",
             n_random_samples=n_samples,
-            # At least the largest batch any strategy asks for, or the surplus
-            # points fall through to a fallback that ranks by predicted mean
-            # with no uncertainty term and global_best stops being UCB.
+            # Refine the high-UCB starts before ranking by predicted mean.
             n_top_for_optimization=protocol.N_TOP_FOR_OPTIMIZATION,
             ucb_kappa=self._ucb_kappa,
             diversity_radius=self._diversity_radius,
@@ -370,9 +367,7 @@ def _refined_selection(best_points, samples, scores, X_obs, n_points, minimum,
     taking the next best unrefined pool row keeps the budget at n_points and
     keeps every arm measured under the same rule.
 
-    The replaced count is stored on the owner as postfilter_dropped, because
-    the response letter has to say how often this happened rather than assert
-    that it never does.
+    postfilter_dropped records the number of refined points replaced.
     """
     order = np.argsort(scores)[::-1]
     selected = []
@@ -880,32 +875,12 @@ class GeneticAlgorithm:
         if len(y_obs):
             elite = np.asarray(X_obs[int(np.argmax(y_obs))], dtype=float)
 
-        # The generation count follows the same rule the discrete branch uses,
-        # round(candidates / population), applied to the protocol's shared
-        # pool. The earlier justification -- matching the discrete Arrhenius
-        # pool this landscape was sampled into -- lapsed when the discrete
-        # main experiment was dropped, and a stale reason in a comment is the
-        # same defect the reviewer raised about the manuscript.
-        #
-        # A sequential, self-adapting search over this many evaluations is not
-        # the same thing as one pass over that many random candidates, and the
-        # population carries over between rounds while the baselines redraw.
-        # Equal evaluation counts do not mean equal search power; both numbers
-        # go in the report.
+        # Each generation scores a population. Match the nominal search budget
+        # to the size of the shared candidate pool.
         generations = self.continuous_generations
         if generations is None:
-            # The candidate count has to be the one this round actually used.
-            # Reading protocol.POOL_SIZE instead was fine while every run drew
-            # the same pool, but a caller may now hand in a pool of another
-            # then give a small pool and a large pool the same number of
-            # generations, so the two would stop being comparable in search
-            # depth.
-            #
-            # The runner's declared count wins over len(pool). The pool handed
-            # in is the filtered one, and its length falls a little further
-            # every round as measured points accumulate, so len(pool) would
-            # shrink the generation count over the run and would stop the
-            # published 10,000-candidate run from reproducing.
+            # Use the pool size before filtering so the generation budget stays
+            # fixed as observations accumulate.
             n_candidates = getattr(self, "pool_size_hint", None)
             if n_candidates is None:
                 n_candidates = (len(pool) if pool is not None
@@ -1012,9 +987,7 @@ def _expected_improvement(mu, sigma, y_best):
 class UCBOAlgorithm:
     """Bayesian Optimization with UCB acquisition (mu + kappa*sigma).
 
-    Uses the same fixed GP as BOAlgorithm, but replaces EI with UCB.
-    This allows a fair comparison that isolates the effect of multi-strategy
-    coordination in GLOSS from the effect of UCB vs EI acquisition.
+    Uses the supplied surrogate to rank candidates by UCB. BOAlgorithm uses EI.
     """
 
     def __init__(self, kappa=2.0, seed=None):
@@ -1138,7 +1111,7 @@ class RandomAlgorithm:
 
 
 # --------------------------------------------------------------------------
-# Batch-aware baselines requested by Reviewer 2 (JCIM ci-2026-02855a)
+# Batch-aware acquisition functions
 #
 # Both build a batch from joint samples of the surrogate, i.e. whole predicted
 # functions over the candidate set, rather than from a pointwise score. With a

@@ -15,7 +15,7 @@ class GPSurrogate:
     #:
     #: The continuous protocol treats local refinement as a no-op, which holds
     #: for the random forest and not for a smooth surrogate. Measured on this
-    #: machine (``measure_refinement_gp.py``, 180 probes per family): the
+    #: machine (``reproduction.studies.gp_refinement``, 180 probes per family): the
     #: random forest never moves a point, the Gaussian process moves in 92 of
     #: 180 probes with a median of 0.0007 and a maximum of 1.18. A run under
     #: this family must therefore pass measured refinement evidence.
@@ -79,8 +79,7 @@ class GPSurrogate:
         variation, and the threshold that a median-quantile gate would use.
 
         The plateau share is what decides whether sigma can rank candidates at
-        all. It is measured on the candidates the arm actually scored, per the
-        plan; the caller passes that set.
+        all. It is measured on the candidate set scored by the arm.
         """
         std = self.predict(X, return_std=True)[1]
         top = float(np.max(std))

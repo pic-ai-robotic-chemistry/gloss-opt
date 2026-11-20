@@ -645,6 +645,10 @@ def fig2_scaling_v100():
 
 def fig3_complexity():
     df = pd.read_csv(os.path.join(RESULTS_DIR, "bench_complexity_summary.csv"))
+    df["algorithm"] = df.algorithm.replace({"GA": "UCB tournament"})
+    order = ["UCB tournament" if arm == "GA" else arm for arm in ALGO_ORDER]
+    colors = {**ALGO_COLORS, "UCB tournament": ALGO_COLORS["GA"]}
+    lines = {**ALGO_LINES, "UCB tournament": ALGO_LINES["GA"]}
     levels = ["C1-simple", "C2-moderate", "C3-multi", "C4-complex", "C5-extreme"]
 
     fig, axes = plt.subplots(1, 4, figsize=(16, 4))
@@ -654,25 +658,25 @@ def fig3_complexity():
     t95_data = []
     for lv in levels:
         row = {}
-        for algo in ALGO_ORDER:
+        for algo in order:
             sub = df[(df["dataset"] == lv) & (df["algorithm"] == algo)]
             if len(sub) == 0:
-                row[algo] = 20
+                row[algo] = np.nan
                 continue
             seeds_t95 = []
             for seed in sub["seed"].unique():
                 ssub = sub[sub["seed"] == seed]
                 reached = ssub[ssub["pct_opt"] >= 95]
-                seeds_t95.append(int(reached["round"].min()) if len(reached) > 0 else 20)
+                seeds_t95.append(int(reached["round"].min()) + 1 if len(reached) > 0 else 21)
             row[algo] = np.mean(seeds_t95)
         t95_data.append(row)
 
     x = np.arange(len(levels))
     width = 0.15
-    for i, algo in enumerate(ALGO_ORDER):
+    for i, algo in enumerate(order):
         vals = [d[algo] for d in t95_data]
         ax.bar(x + i * width - 0.3, vals, width * 0.9,
-               color=ALGO_COLORS[algo], label=algo, edgecolor="white", linewidth=0.5)
+               color=colors[algo], label=algo, edgecolor="white", linewidth=0.5)
     ax.set_xticks(x)
     ax.set_xticklabels(["C1", "C2", "C3", "C4", "C5"], fontsize=8)
     ax.set_ylabel("t95 (rounds)", fontsize=9)
@@ -683,7 +687,7 @@ def fig3_complexity():
     # Panels B-D: convergence at C1, C3, C5 (legend on C)
     for i, lv in enumerate(["C1-simple", "C3-multi", "C5-extreme"]):
         ax = axes[i + 1]
-        _convergence(ax, df, lv, ALGO_ORDER, ALGO_COLORS, ALGO_LINES,
+        _convergence(ax, df, lv, order, colors, lines,
                      show_legend=(i == 1), show_ylabel=(i == 0))
         label = lv.split("-")[0]
         ax.set_title(label, fontsize=10, fontweight="bold")
@@ -1361,13 +1365,16 @@ def fig_scaling_convergence_grid(out_name="si_fig_scaling_convergence.jpg"):
     print(f"Saved: {out}")
 
 
-if __name__ == "__main__":
+def legacy_figures():
     fig1_main()
     fig2_scaling()
     fig3_complexity()
     fig4_ratio_scaling()
     fig5_ratio_complexity()
-    fig6_trajectory()
+    if os.path.exists(POINTS_CSV):
+        fig6_trajectory()
+    else:
+        print("Legacy four-arm trajectory skipped: its historical point file is unavailable.")
     fig3_scaling_boxplot()
     fig3_scaling_boxplot(algos=["GLOSS", "UCB-BO", "BO(EI)", "GA"],
                          nrows=2, ncols=2,
@@ -1376,3 +1383,13 @@ if __name__ == "__main__":
     fig3_scaling_bar(out_name="bench_scaling_bar_inverted.jpg", invert_y=True)
     fig_scaling_convergence_grid()
     print("\nAll figures generated.")
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--legacy", action="store_true", help="Plot the older five-arm benchmark files")
+    if parser.parse_args().legacy:
+        legacy_figures()
+    else:
+        from reproduction.rebuild import figures
+        figures()

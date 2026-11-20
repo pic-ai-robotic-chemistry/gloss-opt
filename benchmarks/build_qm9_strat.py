@@ -1,4 +1,4 @@
-"""Build quantile-stratified QM9-gap subsets for the new scaling benchmark.
+"""Build quantile-stratified QM9-gap subsets for the historical stratified scaling benchmark.
 
 Strategy:
   1. Load the full QM9 CSV, compute 20 RDKit descriptors for every molecule
@@ -15,6 +15,8 @@ Strategy:
 Distinct from the existing load_qm9() path: nothing here writes into
 benchmarks/data/qm9.csv or other existing files.
 """
+
+from __future__ import annotations
 
 import os
 import time

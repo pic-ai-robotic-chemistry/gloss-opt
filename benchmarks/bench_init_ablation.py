@@ -1,32 +1,15 @@
-"""Does the GLOSS advantage survive a different starting set?
+"""Historical comparison of three initialization schemes on finite libraries.
 
-Reviewer 2 pointed out that every published run starts from eight points drawn
-from the bottom 20% of the pool, and that this is exactly the starting
-condition under which forced exploration pays off, so it may not represent a
-real campaign. This script repeats the comparison from three starting sets.
+The paper's four-design study is implemented in reproduction.studies.initialization.
 
     bottom20   eight points from the worst 20% by value, as published
     random     eight points drawn uniformly from the whole pool
     lhs        a Latin hypercube in the feature box, each point snapped to its
                nearest unused candidate
 
-A Latin hypercube spreads points by splitting every feature into equal strata
-and taking one point per stratum, so the start covers the space evenly instead
-of landing wherever chance puts it. It is defined for a continuous box, while
-these pools are finite sets of real molecules or conditions, so each generated
-point is moved to the nearest candidate that is still free. Two consequences
-are worth stating rather than hiding:
-
-  - snapping pulls points off their strata, so the start is only approximately
-    even, and the more crowded the pool the larger the pull;
-  - with eight points in twenty or more features, stratification buys little
-    over uniform sampling, because eight points cannot cover that many
-    dimensions either way. The comparison that carries weight here is
-    bottom20 against random.
-
-Buchwald-Hartwig is run with bottom20 and random only. Its features are 44
-one-hot columns, so the feature box is a corner set, not a volume, and a Latin
-hypercube in it has no meaning.
+For the LHS design, each target in the continuous feature box is mapped
+to the nearest unused library member. This historical script runs only
+bottom20 and random on the one-hot Buchwald-Hartwig library.
 
 Usage:
     python -m benchmarks.bench_init_ablation --dataset arrhenius

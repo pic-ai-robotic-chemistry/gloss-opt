@@ -1,55 +1,13 @@
-"""The protocol the continuous benchmark holds every algorithm to.
-
-The discrete benchmark is even-handed by construction: every algorithm scores
-the same candidate library. The continuous benchmark had no such construction,
-and the algorithms drifted apart. Measured before this module existed, on the
-two-dimensional Arrhenius surface, per round:
-
-    GLOSS      10,704 points sent to the surrogate, 6.95 of 8 points delivered
-    BO(EI)      5,030 points, 8.00 delivered
-    UCB-BO      5,030 points, 8.00 delivered
-    GA         10,134 points, 8.00 delivered
-    qPO        10,000 points, 8.00 delivered
-    Thompson   10,000 points, 8.00 delivered
-
-GLOSS was sampling a separate pool per strategy, so it saw two to three times
-as many candidates as the baselines. Only GLOSS refused to propose a point
-close to one already measured: qPO spent 17% of its experiments within 0.002
-of a measured point, Thompson 18%, GLOSS none. Both asymmetries work against
-the batch-aware baselines, which is the opposite of what the continuous
-rewrite was meant to fix.
-
-Everything the protocol fixes lives here, is read through get() alone, and
-raises rather than falling back, for the same reason the reference values do:
-a benchmark that silently runs two algorithms under different rules produces
-a number that looks fine and means nothing.
-"""
+"""Shared candidate pools, exclusion distances and refinement rules for continuous benchmarks."""
 import numpy as np
 
 from benchmarks.reference_values import PCT_OPT_RTOL  # noqa: F401
 
 VERSION = "1.0"
 
-# PCT_OPT_RTOL is defined in reference_values, where the optimum it applies to
-# comes from, and re-exported here because callers reach for it next to the
-# other protocol constants. One definition, two names: it has already been
-# looked up under the wrong module twice.
-
-#: Candidate pool size, shared by every algorithm, every round.
-#:
-#: One number for every landscape and every dimension. A pool that grew with
-#: pool sized from the 95% hit rate would put the answer into the setup: by
-#: that rule the ten-dimensional level would get 122,000 candidates against
-#: 512 for the two-dimensional one, while dimension is the very thing being
-#: compared. Coverage is reported as a diagnostic instead (see
-#: fraction_above_threshold).
-#:
-#: 10,000 is what qPO and Thompson already used, and it keeps GLOSS near two
-#: seconds per round at ten dimensions. The cost of a larger pool falls almost
-#: entirely on GLOSS: measured at ten dimensions, 5,000 candidates cost it
-#: 1.46 s per round and 250,000 cost 50.3 s, of which 87-98% is the per-point
-#: neighbourhood loop in local_best, while the random forest needs 0.85 s and
-#: qPO needs 0.04 s on the same 250,000.
+# The main Arrhenius benchmark uses 10,000 candidates per round. All arms
+# within a study share its pool size. The dimensionality scan uses 125,000;
+# its Arrhenius sensitivity study compares both pool sizes.
 POOL_SIZE = 10_000
 
 #: How far a proposal has to stay from every point already measured.
@@ -69,34 +27,12 @@ MIN_DISTANCE_TO_MEASURED = 0.02
 #: Bayesian-optimisation baselines already use to drop a duplicate.
 MIN_DISTANCE_WITHIN_BATCH = 1e-6
 
-#: How many of the pool's top-scoring candidates go to local refinement.
-#:
-#: It has to be at least the largest batch any strategy asks for, or the
-#: surplus points fall through to a fallback that ranks by predicted mean with
-#: no uncertainty term. Measured at 3, the four global_best points had UCB
-#: ranks 0, 2217, 499 and 2132 while their predicted-mean ranks were 1483, 0,
-#: 3 and 8: three of the four were chosen by mean, not by the acquisition
-#: function the paper describes.
-#:
-#: Ten is not enough. Measured over 20 rounds x 5 seeds, the share of points
-#: that still came from the mean-ranked fallback was 8.5% at a quota of four
-#: and 28.7% at a quota of six. Fifty takes both to zero. Refinement is a
-#: no-op on this surrogate family, so the extra starts cost almost nothing.
-#:
-#: Even at fifty, global_best is not pure UCB: it takes the UCB top n_top and
-#: then re-sorts those by predicted mean (gloss/strategies/global_best.py).
-#: The constant bounds how far down the UCB ranking a point can come from; it
-#: does not change the ranking rule. The manuscript has to say so.
+#: Continuous Global refines up to 50 high-UCB starts, reranks by predicted
+#: mean, and uses the mean-ranked original pool if additional points are needed.
 N_TOP_FOR_OPTIMIZATION = 50
 
-#: The surrogate family the protocol was measured under.
-#:
-#: Local refinement is a no-op on a random forest, whose prediction is
-#: piecewise constant: measured over both optimizers and both dimensions, the
-#: displacement is exactly zero, nfev is ndim+1, and a finite difference
-#: returns a zero gradient at every step size from 1e-8 to 1e-3. On a Gaussian
-#: largest 1.18. So this protocol does not transfer to another surrogate
-#: family without measuring refinement again. require() enforces that.
+#: RF local refinement had zero displacement in the archived probes. A smooth
+#: GP can move proposals; the GP runner supplies the corresponding measurements.
 SURROGATE_FAMILY = "random_forest"
 
 _ENTRIES = {

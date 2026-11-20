@@ -86,7 +86,7 @@ def run_one(candidates, y_true, top_k, seed, n_rounds=N_ROUNDS):
     return rows
 
 
-def main():
+def main(output_dir=RESULTS_DIR):
     print("Loading QM9-gap (100k)...")
     ds = load_qm9(n_samples=100000, target="gap")
     candidates, y_true = ds["candidates"], ds["y_true"]
@@ -104,28 +104,15 @@ def main():
             all_rows.extend(rows)
 
     df = pd.DataFrame(all_rows)
-    out = os.path.join(RESULTS_DIR, "bench_local_topk_summary.csv")
+    os.makedirs(output_dir, exist_ok=True)
+    out = os.path.join(output_dir, "bench_local_topk_summary.csv")
     df.to_csv(out, index=False)
     print(f"\nSaved: {out}  ({len(df)} rows)")
 
-    # Console summary
-    print("\n" + "=" * 70)
-    print("Summary (mean over 5 seeds, rounds >= 0)")
-    print("=" * 70)
-    print(f"{'K':<10} {'mean t/round (s)':<20} {'mean t95 (rounds)':<20} {'reach 95%'}")
-    for top_k in TOP_K_SWEEP:
-        sub = df[df["top_k"] == top_k]
-        per_round = sub[sub["round"] >= 0]
-        mean_time = per_round["time_s"].mean()
-        seeds_t95 = []
-        for seed in SEEDS:
-            ssub = per_round[per_round["seed"] == seed]
-            r = ssub[ssub["pct_opt"] >= 95]
-            seeds_t95.append(int(r["round"].min()) if len(r) > 0 else 20)
-        reach = sum(1 for t in seeds_t95 if t < 20)
-        label = "full O(n)" if top_k == 0 else str(top_k)
-        print(f"{label:<10} {mean_time:<20.3f} {np.mean(seeds_t95):<20.2f} {reach}/5")
+    from benchmarks.plot_local_topk import summarize
+    print(summarize(df).to_string(index=False))
 
 
 if __name__ == "__main__":
-    main()
+    from reproduction.paths import OUTPUT
+    main(OUTPUT / "reruns")

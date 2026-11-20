@@ -191,7 +191,6 @@ def test_the_denominator_is_the_calibrated_one():
 
     Doubling the stored optimum halves every percentage and leaves an upper
     bound of 100 comfortably satisfied, so the bound cannot stand in for this.
-    Step 1 spent its whole length establishing these four numbers.
     """
     flat = continuous_landscape("arrhenius", **ARRHENIUS)
     assert flat["y_opt"] == 18.352184511262436

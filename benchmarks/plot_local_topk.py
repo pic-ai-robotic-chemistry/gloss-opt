@@ -14,8 +14,9 @@ PLOTS_DIR = os.path.join(os.path.dirname(__file__), "plots")
 os.makedirs(PLOTS_DIR, exist_ok=True)
 
 
-def main():
-    df = pd.read_csv(os.path.join(RESULTS_DIR, "bench_local_topk_summary.csv"))
+def summarize(df=None):
+    if df is None:
+        df = pd.read_csv(os.path.join(RESULTS_DIR, "bench_local_topk_summary.csv"))
 
     SEEDS = [47, 53, 59, 61, 67]
     K_LABELS = {100: "100", 250: "250", 500: "500",
@@ -46,7 +47,14 @@ def main():
                          n_seeds=len(seeds_t95),
                          final_mean=np.mean(seeds_final) if seeds_final else np.nan))
     summary = pd.DataFrame(rows)
-    summary.to_csv(os.path.join(RESULTS_DIR, "bench_local_topk_table.csv"), index=False)
+    return summary
+
+
+def main(output_dir=PLOTS_DIR, table_dir=RESULTS_DIR):
+    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(table_dir, exist_ok=True)
+    summary = summarize()
+    summary.to_csv(os.path.join(table_dir, "bench_local_topk_table.csv"), index=False)
     print(summary.to_string(index=False))
 
     # Two-panel figure: runtime vs K, t95 vs K
@@ -55,7 +63,7 @@ def main():
     # x-axis: K with full O(n) at the right end (use n_pool = 100k for plot)
     x_vals = []
     x_labels = []
-    for r in rows:
+    for r in summary.to_dict("records"):
         x_vals.append(r["K"] if r["K"] > 0 else 100000)
         x_labels.append(r["label"])
 
@@ -80,15 +88,20 @@ def main():
     ax.set_xscale("log")
     ax.set_xlabel("Local-best top-$K$ candidates", fontsize=10)
     ax.set_ylabel("Mean $t_{95}$ (rounds)", fontsize=10)
-    ax.set_title("B   Quality vs $K$  ($t_{95}$ over 5 seeds)",
+    ax.set_title("B   Quality vs $K$  (full scan: one seed)",
                  fontsize=11, fontweight="bold", loc="left")
-    ax.axhline(8.2, color="gray", ls=":", lw=0.8, alpha=0.6)
-    ax.text(1.5e4, 8.45, "main paper $t_{95}=8.2$", fontsize=10, color="gray")
+    # QM9-100k, GLOSS 4:2:2, 20 seeds (SI Table S14).
+    main_mean_t95 = 9.1
+    ax.axhline(main_mean_t95, color="gray", ls=":", lw=0.8, alpha=0.7)
+    ax.annotate(f"Main benchmark: {main_mean_t95:.1f}", xy=(0.98, main_mean_t95),
+                xycoords=("axes fraction", "data"), xytext=(0, 3),
+                textcoords="offset points", ha="right", va="bottom",
+                fontsize=10, color="dimgray")
     ax.tick_params(labelsize=10)
-    ax.set_ylim(0, max(summary["t95_mean"].max() + 2, 10))
+    ax.set_ylim(bottom=0)
 
     fig.tight_layout()
-    out = os.path.join(PLOTS_DIR, "si_fig_local_topk.jpg")
+    out = os.path.join(output_dir, "si_fig_local_topk.jpg")
     fig.savefig(out, dpi=300, bbox_inches="tight",
                 format="jpeg", pil_kwargs={"quality": 95})
     plt.close(fig)

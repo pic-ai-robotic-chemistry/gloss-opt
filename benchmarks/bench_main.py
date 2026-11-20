@@ -1,18 +1,15 @@
-"""New benchmark suite: 5 studies for GLOSS publication.
+"""RF benchmark runners for the three paper datasets and historical studies.
 
-Usage:
-    python -m benchmarks.bench_main --study main
-    python -m benchmarks.bench_main --study scaling
-    python -m benchmarks.bench_main --study complexity
-    python -m benchmarks.bench_main --study ratio_scaling
-    python -m benchmarks.bench_main --study ratio_complexity
-    python -m benchmarks.bench_main --study pilot   # quick test (1 seed, 10 rounds)
+Use --study paper for all eleven configurations, or --study main9 for the
+nine-arm comparison used for paired inference. Legacy five-arm experiments
+and the single-seed pilot have separate study names.
 """
 
 import argparse
 import hashlib
 import inspect
 import os
+from pathlib import Path
 import subprocess
 import time
 import numpy as np
@@ -38,16 +35,14 @@ from benchmarks.virtual_functions import (
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
+RERUN_DIR = Path(__file__).resolve().parents[1] / "build" / "paper" / "reruns"
+
 N_INIT = 8
 N_ROUNDS = 20
 N_POINTS = 8
 SEEDS = [47, 53, 59, 61, 67]
-# Reviewer 2 asked for more independent runs. The first five are the
-# published ones, so those runs stay comparable; the rest continue the same
-# sequence of primes. One definition, because the scaling sweep had its own.
+# The scaling study uses the first ten seeds; the main study uses all twenty.
 SEEDS_10 = SEEDS + [71, 73, 79, 83, 89]
-# sequence of primes by ten more, so the published five stay comparable and the
-# ten of the first re-run stay a prefix of the twenty.
 SEEDS_20 = SEEDS_10 + [97, 101, 103, 107, 109, 113, 127, 131, 137, 139]
 
 GLOSS_STRATEGY = {"global_best": 4, "local_best": 2, "unexplored": 2, "unconverged": 0}
@@ -147,6 +142,8 @@ CONTINUOUS_ARMS = ["GLOSS(4:2:2)", "GLOSS(2:3:3)", "GLOSS(6:1:1)",
 RERUN_ARMS = ["GLOSS(4:2:2)", "GLOSS(8:0:0)", "GLOSS(8:0:0)+div",
               "UCB-BO", "BO(EI)", "GA", "qPO", "Thompson", "Random"]
 
+
+PAPER_ARMS = RERUN_ARMS + ["GLOSS(2:3:3)", "GLOSS(6:1:1)"]
 
 def make_arms(seed, names):
     """One algorithm object per (arm, seed). Never reuse one across seeds.
@@ -343,15 +340,9 @@ def run_discrete(dataset, algo_name, algo, seed, n_rounds=N_ROUNDS,
                 row_sum[field] = stats[field]
             elif hasattr(algo, field):
                 row_sum[field] = getattr(algo, field)
-        # is structurally zero. It is written anyway: a merged table that has
-        # the column for one path and not the other turns half the rows into a
-        # missing value, and a missing value reads as "not measured".
+        # Discrete selection does not refine coordinates.
         row_sum["postfilter_dropped"] = int(getattr(algo, "postfilter_dropped", 0))
-        # The strategy layer measures the plateau share on the exact set it
-        # ranked, which is the set the plan defines. The runner's copy above is
-        # a fixed-seed subsample of the same pool, so the two agree to about
-        # 0.004; keeping both makes the subsampling checkable rather than
-        # assumed.
+        # Compare plateau shares from the scored pool and the diagnostic subsample.
         _stats = getattr(algo, "last_novelty_stats", None) or {}
         if "sigma_platform_share" in _stats:
             row_sum["sigma_platform_share_gate"] = _stats["sigma_platform_share"]
@@ -401,20 +392,23 @@ def _runner_version():
 
 
 def _code_revision():
-    """The git revision, recorded alongside the runner fingerprint."""
-    try:
-        head = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
-                              capture_output=True, text=True, timeout=10,
-                              cwd=os.path.dirname(os.path.dirname(__file__)))
-        dirty = subprocess.run(["git", "status", "--porcelain"],
-                               capture_output=True, text=True, timeout=10,
-                               cwd=os.path.dirname(os.path.dirname(__file__)))
-        if head.returncode != 0:
-            return "unknown"
-        mark = "+dirty" if dirty.stdout.strip() else ""
-        return head.stdout.strip() + mark
-    except Exception:
-        return "unknown"
+    """Identify either the Git checkout or the sources in a downloaded archive."""
+    root = Path(__file__).resolve().parents[1]
+    if (root / ".git").exists():
+        try:
+            head = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"],
+                                           text=True, timeout=10, cwd=root).strip()
+            dirty = subprocess.check_output(["git", "status", "--porcelain"],
+                                            text=True, timeout=10, cwd=root)
+            return head + ("+dirty" if dirty.strip() else "")
+        except (OSError, subprocess.SubprocessError):
+            pass
+    digest = hashlib.sha256()
+    for package in ("benchmarks", "gloss"):
+        for path in sorted((root / package).rglob("*.py")):
+            digest.update(path.relative_to(root).as_posix().encode() + b"\0")
+            digest.update(path.read_bytes() + b"\0")
+    return "source-" + digest.hexdigest()[:16]
 
 
 CODE_REVISION = _code_revision()
@@ -716,14 +710,7 @@ def run_continuous(landscape, ds_name, algo_name, algo, seed,
         # conclude the pool was empty.
         if coverage is not None:
             row.update(coverage)
-        # Whatever the algorithm knows about its own round goes into the
-        # result file, the same way run_discrete has done it since the
-        # genetic-algorithm work. Without this the continuous run reports
-        # none of the three budget counters the response letter quotes.
-        #
-        # n_fill is left out on purpose: it is already written above as
-        # n_fill_internal, and one quantity under two names in one row is
-        # what made the discrete and continuous files disagree.
+        # Store algorithm diagnostics. Internal fill is already recorded in n_fill_internal.
         for field in ("genotype_kind", "sigma_share", "n_ucb_requested",
                       "n_predictions", "n_library_scored",
                       "postfilter_dropped"):
@@ -872,7 +859,7 @@ RUNNER_VERSION = _runner_version()
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def study_main(seeds=SEEDS, n_rounds=N_ROUNDS, out_suffix="", arms=None,
-               base_name="bench_main", title="STUDY 1: Main Comparison"):
+               base_name="bench_main", title="STUDY 1: Main Comparison", output_dir=RERUN_DIR):
     arms_of = (lambda s: make_arms(s, arms)) if arms else make_algorithms
     print("=" * 60)
     print(title)
@@ -903,16 +890,8 @@ def study_main(seeds=SEEDS, n_rounds=N_ROUNDS, out_suffix="", arms=None,
             all_summary.extend(s)
             all_points.extend(p)
 
-    # --- Arrhenius, on the continuous surface ---
-    #
-    # The manuscript describes this problem as a continuous optimisation while
-    # the submitted code ran it on a fixed library of 10,000 draws. That is
-    # the discrepancy reviewer 2 asked us to fix.
-    #
-    # The dataset name differs from the discrete one on purpose. The two
-    # paths divide pct_opt by different things -- the true optimum here,
-    # the largest value in the pool there, 1.40% apart on this surface -- so
-    # a merged table has to keep them apart without anyone remembering to.
+    # Continuous progress uses the calibrated surface optimum. Finite-pool
+    # studies use the best candidate in the library.
     print("\n[3/3] Arrhenius (continuous surface)...")
     land = continuous_landscape("arrhenius", n_peaks=3, peak_width=0.08,
                                 noise_sigma=0.0, seed=42)
@@ -928,8 +907,9 @@ def study_main(seeds=SEEDS, n_rounds=N_ROUNDS, out_suffix="", arms=None,
     df_sum = pd.DataFrame(all_summary)
     df_pts = pd.DataFrame(all_points)
     base = f"{base_name}{out_suffix}"
-    df_sum.to_csv(os.path.join(RESULTS_DIR, f"{base}_summary.csv"), index=False)
-    df_pts.to_csv(os.path.join(RESULTS_DIR, f"{base}_points.csv"), index=False)
+    os.makedirs(output_dir, exist_ok=True)
+    df_sum.to_csv(os.path.join(output_dir, f"{base}_summary.csv"), index=False)
+    df_pts.to_csv(os.path.join(output_dir, f"{base}_points.csv"), index=False)
     print(f"\nSaved: {base}_summary.csv, {base}_points.csv")
     return df_sum
 
@@ -940,8 +920,17 @@ def study_main9(seeds=SEEDS_20, n_rounds=N_ROUNDS, out_suffix=""):
                       title="STUDY 1: Main Comparison")
 
 
+def _save_sweep(rows, filename):
+    frame = pd.DataFrame(rows)
+    RERUN_DIR.mkdir(parents=True, exist_ok=True)
+    path = RERUN_DIR / filename
+    frame.to_csv(path, index=False)
+    print(f"Saved: {path}")
+    return frame
+
+
 def study_scaling(seeds=SEEDS, n_rounds=N_ROUNDS, out_suffix=""):
-    """Study 2: QM9-gap at n=5k,10k,...,100k × 4 algorithms."""
+    """Study 2: QM9-gap at n=5k,10k,...,100k × 5 algorithms."""
     print("=" * 60)
     print("STUDY 2: Scaling Study")
     print("=" * 60)
@@ -960,17 +949,13 @@ def study_scaling(seeds=SEEDS, n_rounds=N_ROUNDS, out_suffix=""):
                 s, _ = run_discrete(ds, aname, algo, seed, n_rounds)
                 all_summary.extend(s)
 
-    df = pd.DataFrame(all_summary)
-    df.to_csv(os.path.join(RESULTS_DIR,
-                       f"bench_scaling{out_suffix}_summary.csv"), index=False)
-    print(f"\nSaved: bench_scaling_summary.csv")
-    return df
+    return _save_sweep(all_summary, f"bench_scaling{out_suffix}_summary.csv")
 
 
 def study_complexity(seeds=SEEDS, n_rounds=N_ROUNDS, out_suffix=""):
-    """Study 3: Virtual Arrhenius at 5 complexity levels × 4 algorithms (discrete)."""
+    """Study 3: Virtual Arrhenius at 5 complexity levels × 5 algorithms (discrete)."""
     print("=" * 60)
-    print("STUDY 3: Complexity Study (discrete, 10k candidates)")
+    print("STUDY 3: Complexity Study (discrete, 5k to 50k candidates)")
     print("=" * 60)
 
     all_summary = []
@@ -1001,11 +986,7 @@ def study_complexity(seeds=SEEDS, n_rounds=N_ROUNDS, out_suffix=""):
                 s, _ = run_discrete(ds, aname, algo, seed, n_rounds)
                 all_summary.extend(s)
 
-    df = pd.DataFrame(all_summary)
-    df.to_csv(os.path.join(RESULTS_DIR,
-                       f"bench_complexity{out_suffix}_summary.csv"), index=False)
-    print(f"\nSaved: bench_complexity_summary.csv")
-    return df
+    return _save_sweep(all_summary, f"bench_complexity{out_suffix}_summary.csv")
 
 
 def study_ratio_scaling(seeds=SEEDS, n_rounds=N_ROUNDS, out_suffix=""):
@@ -1028,11 +1009,7 @@ def study_ratio_scaling(seeds=SEEDS, n_rounds=N_ROUNDS, out_suffix=""):
                 s, _ = run_discrete(ds, aname, algo, seed, n_rounds)
                 all_summary.extend(s)
 
-    df = pd.DataFrame(all_summary)
-    df.to_csv(os.path.join(RESULTS_DIR,
-                       f"bench_ratio_scaling{out_suffix}_summary.csv"), index=False)
-    print(f"\nSaved: bench_ratio_scaling_summary.csv")
-    return df
+    return _save_sweep(all_summary, f"bench_ratio_scaling{out_suffix}_summary.csv")
 
 
 def study_ratio_complexity(seeds=SEEDS, n_rounds=N_ROUNDS, out_suffix=""):
@@ -1069,11 +1046,7 @@ def study_ratio_complexity(seeds=SEEDS, n_rounds=N_ROUNDS, out_suffix=""):
                 s, _ = run_discrete(ds, aname, algo, seed, n_rounds)
                 all_summary.extend(s)
 
-    df = pd.DataFrame(all_summary)
-    df.to_csv(os.path.join(RESULTS_DIR,
-                       f"bench_ratio_complexity{out_suffix}_summary.csv"), index=False)
-    print(f"\nSaved: bench_ratio_complexity_summary.csv")
-    return df
+    return _save_sweep(all_summary, f"bench_ratio_complexity{out_suffix}_summary.csv")
 
 
 def study_pilot(seeds=None, n_rounds=10):
@@ -1135,7 +1108,7 @@ def study_pilot(seeds=None, n_rounds=10):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--study", default="pilot",
-                        choices=["pilot", "main", "main9", "scaling",
+                        choices=["pilot", "main", "main9", "paper", "scaling",
                                  "complexity", "ratio_scaling",
                                  "ratio_complexity", "all"])
     # Verifying that a study still runs used to mean editing the source, and
@@ -1143,22 +1116,25 @@ if __name__ == "__main__":
     # both are arguments now.
     parser.add_argument("--seeds", type=int, default=None,
                         help=f"how many seeds to use: at most {len(SEEDS_20)} "
-                             f"for --study main9 (default all "
+                             f"for --study main9 or paper (default all "
                              f"{len(SEEDS_20)}), at most {len(SEEDS_10)} for "
                              f"the other studies (default the five published "
                              f"ones).")
     parser.add_argument("--rounds", type=int, default=N_ROUNDS)
     parser.add_argument("--out-suffix", default="",
                         help="appended to the output file names; use it for "
-                             "a verification run, because the published "
-                             "files are not in version control")
+                             "a verification run to keep other "
+                             "result files separate")
     args = parser.parse_args()
 
-    cap = len(SEEDS_20) if args.study == "main9" else len(SEEDS_10)
-    if args.seeds is not None and args.seeds > cap:
-        parser.error(f"--seeds at most {cap} for --study {args.study}")
-    seeds = (SEEDS if args.seeds is None
-             else (SEEDS_20 if args.study == "main9" else SEEDS_10)[:args.seeds])
+    is_paper_study = args.study in ("main9", "paper")
+    available = SEEDS_20 if is_paper_study else SEEDS_10
+    if args.seeds is not None and not 1 <= args.seeds <= len(available):
+        parser.error(f"--seeds must be between 1 and {len(available)}")
+    if args.rounds < 1:
+        parser.error("--rounds must be positive")
+    default_seeds = SEEDS_20 if is_paper_study else SEEDS
+    seeds = default_seeds if args.seeds is None else available[:args.seeds]
     opts = dict(seeds=seeds, n_rounds=args.rounds,
                 out_suffix=args.out_suffix)
 
@@ -1167,6 +1143,9 @@ if __name__ == "__main__":
                     n_rounds=args.rounds if args.rounds != N_ROUNDS else 10)
     elif args.study == "main":
         study_main(**opts)
+    elif args.study == "paper":
+        study_main(**opts, arms=PAPER_ARMS, base_name="bench_paper",
+                   title="Paper benchmark: eleven algorithms on three datasets")
     elif args.study == "main9":
         study_main9(**opts)
     elif args.study == "scaling":

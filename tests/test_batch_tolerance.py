@@ -11,7 +11,7 @@ class StepRamp:
     The value falls as x grows, so the best candidate is the one with the
     smallest x. The steps matter: a smooth ramp would let the continuous
     refinement slide every point to the boundary and the batch spacing would
-    not be what the test measured. Measured on the real forest in step 2: the
+    not be what the test measured. For the benchmark RF, the
     refinement moves a point by exactly zero.
     """
 

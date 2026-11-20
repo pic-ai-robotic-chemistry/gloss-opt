@@ -1,0 +1,21 @@
+\begin{tabular}{@{}p{0.25\linewidth}p{0.29\linewidth}p{0.39\linewidth}@{}}
+\toprule
+Arm & Knob & Value used \\
+\midrule
+Surrogate-guided algorithms & main-benchmark surrogate & Random forest, 100 trees, \texttt{n\_jobs=1} \\
+All algorithms & requested batch size & 8 per round for 20 rounds \\
+Continuous pointwise BO & local refinement & bounded search on the acquisition \\
+\midrule
+GLOSS & ratio $n_g:n_l:n_u$ & 4:2:2 (alternatives 2:3:3, 6:1:1) \\
+GLOSS & $\kappa$ & 2.0 \\
+GLOSS & $r_{div}$ & 0.02 \\
+GLOSS & Local-best $K$ & 500 \\
+GLOSS & continuous refinement starts & up to 50 Global, up to 20 Local \\
+BO-UCB & acquisition & $\mu + \kappa\sigma$, $\kappa = 2.0$ \\
+BO-EI & acquisition & expected improvement \\
+qPO & posterior draws & 100 trees, probability quantized at 0.01 \\
+Thompson & posterior draws & 100 trees, one per slot \\
+GA & tournament / elite / mutation & tournament 3 / elite 1 / $1/d$ per site or coordinate \\
+Random & acquisition & none \\
+\bottomrule
+\end{tabular}

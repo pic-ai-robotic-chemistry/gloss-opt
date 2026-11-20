@@ -6,8 +6,7 @@ from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-import xgboost as xgb
-import lightgbm as lgb
+from importlib.util import find_spec
 
 
 class _RBFRegressorWrapper(BaseEstimator, RegressorMixin):
@@ -30,7 +29,7 @@ class _RBFRegressorWrapper(BaseEstimator, RegressorMixin):
 
 def get_ml_model_configs():
     """Return the ML model configs for auto-selection."""
-    return [
+    configs = [
         {
             "name": "GaussianProcess",
             "estimator": GaussianProcessRegressor(random_state=42),
@@ -51,7 +50,11 @@ def get_ml_model_configs():
                 "max_depth": [None, 10, 20],
             },
         },
-        {
+    ]
+    if find_spec("xgboost") is not None:
+        import xgboost as xgb
+
+        configs.append({
             "name": "XGBoost",
             "estimator": xgb.XGBRegressor(random_state=42, verbosity=0),
             "param_grid": {
@@ -59,8 +62,11 @@ def get_ml_model_configs():
                 "max_depth": [3, 6, 10],
                 "learning_rate": [0.01, 0.1, 0.3],
             },
-        },
-        {
+        })
+    if find_spec("lightgbm") is not None:
+        import lightgbm as lgb
+
+        configs.append({
             "name": "LightGBM",
             "estimator": lgb.LGBMRegressor(random_state=42, verbosity=-1),
             "param_grid": {
@@ -68,7 +74,9 @@ def get_ml_model_configs():
                 "max_depth": [-1, 10, 20],
                 "learning_rate": [0.01, 0.1, 0.3],
             },
-        },
+        })
+
+    return configs + [
         {
             "name": "SVR",
             "estimator": Pipeline([

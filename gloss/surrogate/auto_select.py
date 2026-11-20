@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import GridSearchCV
 from sklearn.base import clone
 from gloss.surrogate.ml_models import get_ml_model_configs
-from gloss.surrogate.nn_models import get_nn_model_configs
+from importlib.util import find_spec
 
 
 def auto_select_surrogate(X, y, cv_folds=5, scoring="neg_root_mean_squared_error"):
@@ -18,7 +18,11 @@ def auto_select_surrogate(X, y, cv_folds=5, scoring="neg_root_mean_squared_error
             f"(n={n_samples})."
         )
 
-    configs = get_ml_model_configs() + get_nn_model_configs(input_dim=X.shape[1])
+    configs = get_ml_model_configs()
+    if find_spec("torch") is not None:
+        from gloss.surrogate.nn_models import get_nn_model_configs
+
+        configs.extend(get_nn_model_configs(input_dim=X.shape[1]))
 
     best_score = -np.inf
     best_estimator = None
