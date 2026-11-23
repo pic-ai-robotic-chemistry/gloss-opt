@@ -119,12 +119,12 @@ def fig_scaling():
     for key in SCALING_ARMS:
         color, style, marker = STYLE[key]
         sub = table[table["arm"] == key].sort_values("size")
-        ax.errorbar(sub["size"] / 1000.0, sub["t95"], yerr=sub["sd"],
+        ax.errorbar(sub["size"], sub["t95"], yerr=sub["sd"],
                     color=color, ls=style, lw=1.6, marker=marker, ms=4.0,
                     capsize=2.4, elinewidth=0.9, label=LABEL[key], zorder=3)
         lost = sub[sub["success"] < sub["seeds"]]
         if len(lost):
-            ax.plot(lost["size"] / 1000.0, lost["t95"], ls="none", marker="o",
+            ax.plot(lost["size"], lost["t95"], ls="none", marker="o",
                     ms=8.0, mfc="white", mec=color, mew=1.1, zorder=4)
     ax.axhline(CENSOR, color="black", ls=":", lw=1.0, alpha=0.5)
     ax.set_xlabel("Candidate pool size ($10^3$)", fontsize=10.5)
